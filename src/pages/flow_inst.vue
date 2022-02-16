@@ -1,0 +1,175 @@
+<script lang="ts" setup>
+import SingleTable from 'components/SingleTable.vue';
+import Pagination from 'components/Pagination.vue';
+import { ref,reactive } from 'vue';
+import { ElMessage } from 'element-plus';
+import Cookies from 'js-cookie'
+import axios from 'axios';
+
+const data = reactive({
+	flowLabels:[],
+	flowData: [],
+	flowTotal: 0,
+	nodeLabels:[],
+	nodeData: [],
+	nodeTotal: 0,
+})
+
+const FlowTable = ref()
+
+import { axiosSend, loading } from 'utils/http.ts'
+import Configs from 'api/flow.ts'
+import Params from 'api/params.ts'
+
+const getAllFlowInst=()=>{
+	let config = Configs.query
+	let param = Params.query
+	param["service"] = "FlowInstService"
+	param["action"] = "all"
+	config["params"] = param
+	let load = loading()
+	axiosSend(config).then( function (res){
+		let res_data = res.data
+		data.flowData = res_data.rows
+		data.flowTotal = res_data.total
+		data.flowLabels = Object.keys(data.flowData[0])
+		load.close()
+	})
+}
+
+const clickFlowInst = (row) =>{
+	console.log("row_id: ",row.id)
+	if (row.id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		let config = Configs.query
+		let param = Params.query
+		param["service"] = "NodeInstService"
+		param["action"] = "filter"
+		param["filters"] = {"flow_instance_id":row.id}
+		config["params"] = param
+		let load = loading()
+		axiosSend(config).then( function (res){
+			// console.log(res)
+			let res_data = res.data
+			if (res_data.total > 0){
+				data.nodeData = res_data.rows
+				data.nodeTotal = res_data.total
+				data.nodeLabels = Object.keys(data.nodeData[0])
+			}else{
+				data.nodeData = []
+				data.nodeTotal = 0
+			}
+			load.close()
+		})
+	}
+}
+
+const runFlowInst=(id)=>{
+	let config = Configs.commit
+	let param = Params.commit
+	param["service"] = "FlowInstService"
+	param["action"] = "run"
+	param["data"] = {"id":id}
+	config["data"] = param
+	let load = loading()
+	axiosSend(config).then( function (res){
+		console.log("res == ",res)
+		load.close()
+	})
+}
+
+
+
+</script>
+
+<template>
+	<el-row>
+		<el-col :span="24">
+			<div style="text-align: left; margin: 5px;" >
+				<el-button type="primary" plain @click="getAllFlowInst">getAllFlowInst</el-button>
+			</div>
+		</el-col>
+	</el-row>
+	<el-row>
+		<el-col :span="24">
+			<div style="text-align: left; margin: 5px;">
+				<SingleTable 
+				ref="FlowTable"
+				:labels="data.flowLabels" 
+				:tableData="data.flowData"
+				@rowClick="clickFlowInst"
+				>
+					<template v-slot:operations="{scope_row}">
+						<el-button
+							type="text"
+							size="small"
+							@click="instanceFlow(scope_row.id)"
+							>
+							run
+						</el-button>
+					</template>
+					<template v-slot:columnslot>
+						<el-table-column fixed="right" label="slot 操作栏" width="200">
+							<template #default="scope">
+								<el-button
+									type="text"
+									size="small"
+									@click="runFlowInst(scope.row.id)"
+									>
+									run
+								</el-button>
+							</template>
+						</el-table-column>
+					</template>
+				</SingleTable>
+			</div>
+		</el-col>
+	</el-row>
+	<el-row >
+		<el-col :span="24" >
+			<div style="text-align: left; margin-top: 5px;">
+				<Pagination
+				:total = "data.flowTotal"
+				>
+				</Pagination>
+			</div>
+		</el-col>
+	</el-row>
+	<el-divider></el-divider>
+	<el-row>
+		<el-col :span="24">
+			<div style="text-align: left; margin: 5px;" >
+				<el-button type="primary" plain @click="getNodeList">getNodeList</el-button>
+			</div>
+		</el-col>
+	</el-row>
+	<el-row>
+		<el-col :span="24">
+			<div style="text-align: left; margin: 5px;">
+				<SingleTable 
+				ref="NodeTable"
+				:labels="data.nodeLabels" 
+				:tableData="data.nodeData"
+				>
+				</SingleTable>
+			</div>
+		</el-col>
+	</el-row>
+	<el-row >
+		<el-col :span="24" >
+			<div style="text-align: left; margin-top: 5px;">
+				<Pagination
+				:total = "data.nodeTotal"
+				>
+				</Pagination>
+			</div>
+		</el-col>
+	</el-row>
+</template>
+
+<style scoped>
+
+</style>
+
+

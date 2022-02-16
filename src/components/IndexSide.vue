@@ -59,7 +59,7 @@
 				<el-menu-item-group>
 					<template #title>
 						<el-menu-item index="/fwdesign">Flow Design</el-menu-item>
-						<el-menu-item index="/nodesign">Node Design</el-menu-item>
+						<el-menu-item index="/flowinst">Flow Inst</el-menu-item>
 					</template>
 					
 				</el-menu-item-group>

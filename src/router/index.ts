@@ -23,13 +23,13 @@ const routes = [
 			},
 			{
 				path: '/fwdesign',
-				name: 'flowdesign',
+				name: 'flowDesign',
 				component: ()=> import('../pages/flow_design.vue'),
 			},
 			{
-				path: '/nodesign',
-				name: 'nodedesign',
-				component: ()=> import('../pages/node_design.vue'),
+				path: '/flowinst',
+				name: 'flowInst',
+				component: ()=> import('../pages/flow_inst.vue'),
 
 			},
 			{

@@ -85,6 +85,10 @@ const instanceFlow=(id)=>{
 	axiosSend(config).then( function (res){
 		console.log("res == ",res)
 		load.close()
+		if(res){
+			ElMessage.success("ok")
+		}
+		
 	})
 }
 

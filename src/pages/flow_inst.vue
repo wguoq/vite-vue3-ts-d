@@ -21,7 +21,7 @@ import { axiosSend, loading } from 'utils/http.ts'
 import Configs from 'api/flow.ts'
 import Params from 'api/params.ts'
 
-const getAllFlowInst=()=>{
+function getAllFlowInst(){
 	let config = Configs.query
 	let param = Params.query
 	param["service"] = "FlowInstService"
@@ -76,11 +76,15 @@ const runFlowInst=(id)=>{
 	axiosSend(config).then( function (res){
 		console.log("res == ",res)
 		load.close()
+		if(res){
+			ElMessage.success("ok")
+		}
 	})
+	getAllFlowInst()
 }
 
 
-
+getAllFlowInst()
 </script>
 
 <template>
@@ -100,15 +104,6 @@ const runFlowInst=(id)=>{
 				:tableData="data.flowData"
 				@rowClick="clickFlowInst"
 				>
-					<template v-slot:operations="{scope_row}">
-						<el-button
-							type="text"
-							size="small"
-							@click="instanceFlow(scope_row.id)"
-							>
-							run
-						</el-button>
-					</template>
 					<template v-slot:columnslot>
 						<el-table-column fixed="right" label="slot 操作栏" width="200">
 							<template #default="scope">
@@ -117,7 +112,7 @@ const runFlowInst=(id)=>{
 									size="small"
 									@click="runFlowInst(scope.row.id)"
 									>
-									run
+									执行
 								</el-button>
 							</template>
 						</el-table-column>

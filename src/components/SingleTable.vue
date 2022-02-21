@@ -9,7 +9,7 @@ const data = reactive({
 
 const handleCurrentChange = (val: any | undefined) => {
   data.currentRow = val
-  emits('rowClick', data.currentRow)
+  emits('rowClick')
 }
 
 interface Props{
@@ -33,10 +33,10 @@ defineExpose({
 })
 
 const emits = defineEmits<{
-	(event: 'rowClick', data: any):void,
+	(event: 'rowClick'):void,
 }>()
 
-const show =(data: object)=>{
+const show =()=>{
 	ElMessage.success("table自己的按钮")
 }
 </script>
@@ -51,7 +51,12 @@ const show =(data: object)=>{
 		@current-change="handleCurrentChange"
 	>  
 		<template v-for="label in props.labels">
-			<el-table-column :property="label" :label="label" width="auto" show-overflow-tooltip sortable >
+			<el-table-column 
+			:property="label" 
+			:label="label" 
+			width="auto" 
+			show-overflow-tooltip 
+			sortable>
 				<!-- 要把json对象转成string才能显示出来 -->
 				<!-- #default="scope" 可以用scope.row来获取当前行数据scope.$index获取表格index -->
 				<template #default="scope">

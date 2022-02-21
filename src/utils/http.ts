@@ -24,8 +24,9 @@ export function httpError(error:any){
 			ElMessage.error('500 系统错误')
 			  break;
 		}
+	}else{
+		ElMessage.error(error.message)
 	}
-	return false
 }
 
 export function axiosSend(config: object){
@@ -36,27 +37,26 @@ export function axiosSend(config: object){
 		axios.defaults.withCredentials = true
 		const axios_inst = axios.create();
 		//请求拦截器处理post时需要添加的头信息
-		axios_inst.interceptors.request.use(function (config) {
+		axios_inst.interceptors.request.use((config: any) => {
 			if (config.method==="post"){
 				//要添加这句才能发送和接收json格式数据
 				config['headers']['Content-Type'] = 'application/json'
 			}
 			return config;
 		});
-
 		//响应拦截器
-		// axios_inst.interceptors.response.use((response:any) => {
-		// 	return response
-		// });
+		axios_inst.interceptors.response.use((response:any) => {
+			return response
+		});
 		
-		//axios是默认异步的，不能通过return来返回response，所以要在使用的页面then捕获
+		//axios是默认异步的，不能通过return来返回response，所以要在使用的页面用then获取
 		return axios_inst.request(config).catch(function (error) {
-				return httpError(error)
+				httpError(error)
 			});
 	}
 	
 	
-export function loading(text?:string = "loading..."){ 
+export function loading(text?:string = "loading...", timeout?: number = 30000){ 
 	const loading = ElLoading.service({
 		lock: true,
 		text: text,
@@ -64,6 +64,6 @@ export function loading(text?:string = "loading..."){
 	});
 	setTimeout(() => {
 	    loading.close();
-	  }, 10000);
+	  }, timeout);
 	return loading
 }

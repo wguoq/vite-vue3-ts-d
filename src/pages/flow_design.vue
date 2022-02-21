@@ -13,6 +13,9 @@ const data = reactive({
 	nodeLabels:[],
 	nodeData: [],
 	nodeTotal: 0,
+	dialogTableVisible: false,
+	flowDesignTemp:{}
+
 })
 
 const FlowTable = ref()
@@ -29,15 +32,17 @@ const getAllFlow=()=>{
 	config["params"] = param
 	//开启loading
 	let load = loading()
-	axiosSend(config).then( function (res){
+	axiosSend(config).then((res: any)=>{
 		// console.log("res == ",res)
 		//console.log("res.data == ",res.data)
 		//res.data取出来是string，要转成obj
-		let res_data = res.data
-		data.flowData = res_data.rows
-		data.flowTotal = res_data.total
-		data.flowLabels = Object.keys(data.flowData[0])
 		load.close()
+		if(res){
+			let res_data = res.data
+			data.flowData = res_data.rows
+			data.flowTotal = res_data.total
+			data.flowLabels = Object.keys(data.flowData[0])
+		}
 	})
 	//axios.all用于并发多个请求并且等待所有请求都完成
 	// axios.all([axiosSend(url),]).then(axios.spread(function (res1,){
@@ -47,29 +52,28 @@ const getAllFlow=()=>{
 }
 
 const getNodeList=()=>{
-	let flowDesignId = FlowTable.value.data.currentRow.id
-	if (flowDesignId == null){
+	let id = FlowTable.value.data.currentRow.id
+	if (id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
 		let config = Configs.query
 		let param = Params.query
 		param["service"] = "FlowDesignService"
 		param["action"] = "getNodeList"
-		param["filters"] = {"flowDesignId":flowDesignId}
+		param["filters"] = {"id":id}
 		config["params"] = param
 		let load = loading()
-		axiosSend(config).then( function (res){
+		axiosSend(config).then((res:any) => {
 			// console.log(res)
-			let res_data = res.data
-			if (res_data.total > 0){
-				data.nodeData = res_data.rows
-				data.nodeTotal = res_data.total
+			load.close()
+			if (res.data.total > 0){
+				data.nodeData = res.data.rows
+				data.nodeTotal = res.data.total
 				data.nodeLabels = Object.keys(data.nodeData[0])
 			}else{
 				data.nodeData = []
 				data.nodeTotal = 0
 			}
-			load.close()
 		})
 	}
 }
@@ -82,8 +86,7 @@ const instanceFlow=(id)=>{
 	param["data"] = {"id":id}
 	config["data"] = param
 	let load = loading()
-	axiosSend(config).then( function (res){
-		console.log("res == ",res)
+	axiosSend(config).then((res:any)=>{
 		load.close()
 		if(res){
 			ElMessage.success("ok")
@@ -93,38 +96,44 @@ const instanceFlow=(id)=>{
 }
 
 const show = (data) =>{
-	console.log("data: ",data)
+	console.log("show data: ",data)
 }
 
-
-const clickFlow = (row) =>{
-	console.log("row_id: ",row.id)
-	if (row.id == null){
-		ElMessage.warning("没有选中数据")
-	}else{
-		let config = Configs.query
-		let param = Params.query
-		param["service"] = "FlowDesignService"
-		param["action"] = "getNodeList"
-		param["filters"] = {"flowDesignId":row.id}
-		config["params"] = param
-		let load = loading()
-		axiosSend(config).then( function (res){
-			// console.log(res)
-			let res_data = res.data
-			if (res_data.total > 0){
-				data.nodeData = res_data.rows
-				data.nodeTotal = res_data.total
-				data.nodeLabels = Object.keys(data.nodeData[0])
-			}else{
-				data.nodeData = []
-				data.nodeTotal = 0
-			}
-			load.close()
-		})
-	}
+const getDesignTemp=()=>{
+	let config = Configs.query
+	let param = Params.query
+	param["service"] = "FlowService"
+	param["action"] = "getDesignTemp"
+	config["params"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		console.log(res.data)
+		load.close()
+		if(res){
+			data.flowDesignTemp = res.data.des
+			data.dialogTableVisible = true
+		}
+		
+	})
 }
 
+const saveFlowDesign=()=>{
+	let config = Configs.commit
+	let param = Params.commit
+	param["service"] = "FlowService"
+	param["action"] = "add"
+	param["data"] = data.flowDesignTemp
+	config["data"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		if(res){
+			console.log(res)
+			ElMessage.success("ok")
+		}
+		
+	})
+}
 </script>
 
 <template>
@@ -132,9 +141,37 @@ const clickFlow = (row) =>{
 		<el-col :span="24">
 			<div style="text-align: left; margin: 5px;" >
 				<el-button type="primary" plain @click="getAllFlow">getAllFlow</el-button>
+				<el-button type="primary" plain @click="getDesignTemp">add</el-button> 
 			</div>
 		</el-col>
 	</el-row>
+
+	<el-dialog v-model="data.dialogTableVisible" :close-on-click-modal="false">
+		<el-form ref="FlowDesignForm" label-width="120px">
+			<el-row>
+				<template v-for=" (value,index) in data.flowDesignTemp " >
+					<el-col :span='11'>
+						<el-form-item :label="index">
+							<el-input 
+							v-model="data.flowDesignTemp[index]"
+							clearable
+							>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</template>
+			</el-row>
+			<el-row>
+				<el-col :span="11" style="text-align: right; margin: 5px;">
+					  <el-button type="primary" @click="saveFlowDesign">Save</el-button>
+				</el-col>
+				<el-col :span="11" style="text-align: left; margin: 5px;">
+					  <el-button  @click="data.dialogTableVisible = false">Cancel</el-button>
+				</el-col>
+			</el-row>
+		</el-form>
+	</el-dialog>
+	
 	<el-row>
 		<el-col :span="24">
 			<div style="text-align: left; margin: 5px;">
@@ -142,7 +179,7 @@ const clickFlow = (row) =>{
 				ref="FlowTable"
 				:labels="data.flowLabels" 
 				:tableData="data.flowData"
-				@rowClick="clickFlow"
+				@rowClick="getNodeList"
 				>
 					<template v-slot:operations="{scope_row}">
 						<el-button

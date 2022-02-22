@@ -7,9 +7,7 @@ import Cookies from 'js-cookie'
 export function httpError(error:any){
 	if (error.response) {
 		const errorcode = error.response.status
-		//console.log(error.response.data);
-		//console.log(errorcode);
-		//console.log(error.response.headers);
+		const message = error.response.data.message
 		switch (errorcode) {
 		  case 401:
 			ElMessage.error('401 认证失败，无法访问系统资源')
@@ -21,7 +19,7 @@ export function httpError(error:any){
 			ElMessage.error("404 访问资源不存在")
 			  break;
 		  case 500:
-			ElMessage.error('500 系统错误')
+			ElMessage.error('500 系统错误: '+message)
 			  break;
 		}
 	}else{

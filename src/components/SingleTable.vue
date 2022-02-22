@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { ref,reactive } from 'vue'
 import type { ElTable } from 'element-plus'
-import { ElMessage } from 'element-plus';
 
 const data = reactive({
 	currentRow: ""
@@ -15,17 +14,14 @@ const handleCurrentChange = (val: any | undefined) => {
 interface Props{
 	labels: [],
 	tableData: [],
+	colwidth?: any
+	
 }
 
 const props = withDefaults(defineProps<Props>(),{
-	labels:["label1","label2","label3"],
-	tableData: [
-		{
-		  label1: "1",
-		  label2: "2",
-		  label3: "3",
-		},
-	]
+	labels: [],
+	tableData: [],
+	colwidth: "auto",
 })
 
 defineExpose({
@@ -37,7 +33,7 @@ const emits = defineEmits<{
 }>()
 
 const show =()=>{
-	ElMessage.success("table自己的按钮")
+	console.log("table自己的按钮")
 }
 </script>
 
@@ -45,18 +41,20 @@ const show =()=>{
 	<el-table
 		:data="props.tableData"
 		style="width: 100%"
-		max-height="500"
+		max-height="400"
 		highlight-current-row
 		border 
 		@current-change="handleCurrentChange"
 	>  
+		<el-table-column v-if="props.tableData.length > 0" type="index" width="50" />
 		<template v-for="label in props.labels">
 			<el-table-column 
 			:property="label" 
 			:label="label" 
-			width="auto" 
+			:width="props.colwidth"
 			show-overflow-tooltip 
-			sortable>
+			sortable
+			>
 				<!-- 要把json对象转成string才能显示出来 -->
 				<!-- #default="scope" 可以用scope.row来获取当前行数据scope.$index获取表格index -->
 				<template #default="scope">
@@ -82,7 +80,7 @@ const show =()=>{
 					</el-button>
 			</template>
 		</el-table-column>
-		<slot name="columnslot"></slot>
+		<slot v-if="props.tableData.length > 0" name="columnslot" ></slot>
 	</el-table>
 </template>
 

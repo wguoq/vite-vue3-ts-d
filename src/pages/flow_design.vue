@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
+import BaseForm from 'components/BaseForm.vue';
+
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import Cookies from 'js-cookie'
@@ -13,9 +15,11 @@ const data = reactive({
 	nodeLabels:[],
 	nodeData: [],
 	nodeTotal: 0,
-	dialogTableVisible: false,
+	showFwDesignAdd: false,
+	showFwDesignEdit: false,
+	showNdDesignAdd: false,
+	showNdDesignEdit: false,
 	flowDesignTemp:{}
-
 })
 
 const FlowTable = ref()
@@ -24,7 +28,7 @@ import { axiosSend, loading } from 'utils/http.ts'
 import Configs from 'api/flow.ts'
 import Params from 'api/params.ts'
 
-const getAllFlow=()=>{
+function getAllFlow(){
 	let config = Configs.query
 	let param = Params.query
 	param["service"] = "FlowDesignService"
@@ -49,6 +53,65 @@ const getAllFlow=()=>{
 	// 	load.close()
 	// 	console.log("res1 == ",res1)
 	// }))
+}
+
+const openFwDesignAdd=()=>{
+	let config = Configs.query
+	let param = Params.query
+	param["service"] = "FlowDesignService"
+	param["action"] = "getDesignTemp"
+	config["params"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		console.log(res.data)
+		load.close()
+		if(res){
+			data.flowDesignTemp = res.data.des
+			data.showFwDesignAdd = true
+		}
+		
+	})
+}
+
+const saveFlowDesign=()=>{
+	let config = Configs.commit
+	let param = Params.commit
+	param["service"] = "FlowDesignService"
+	param["action"] = "add"
+	param["data"] = data.flowDesignTemp
+	config["data"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		if(res){
+			getAllFlow()
+			data.showFwDesignAdd = false
+			ElMessage.success("ok")
+		}
+	})
+}
+
+const openFwDesignEdit=(row)=>{
+	data.flowDesignTemp = row
+	data.showFwDesignEdit = true
+}
+
+const editFlowDesign=()=>{
+	let config = Configs.commit
+	let param = Params.commit
+	param["service"] = "FlowDesignService"
+	param["action"] = "edit"
+	param["data"] = data.flowDesignTemp
+	config["data"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		if(res){
+			getAllFlow()
+			data.showFwDesignEdit = false
+			ElMessage.success("ok")
+		}
+	})
 }
 
 const getNodeList=()=>{
@@ -78,12 +141,12 @@ const getNodeList=()=>{
 	}
 }
 
-const instanceFlow=(id)=>{
+const instanceFlow=(row)=>{
 	let config = Configs.commit
 	let param = Params.commit
 	param["service"] = "FlowService"
 	param["action"] = "instance"
-	param["data"] = {"id":id}
+	param["data"] = {"id":row.id}
 	config["data"] = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
@@ -99,123 +162,76 @@ const show = (data) =>{
 	console.log("show data: ",data)
 }
 
-const getDesignTemp=()=>{
-	let config = Configs.query
-	let param = Params.query
-	param["service"] = "FlowService"
-	param["action"] = "getDesignTemp"
-	config["params"] = param
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
-		load.close()
-		if(res){
-			data.flowDesignTemp = res.data.des
-			data.dialogTableVisible = true
-		}
-		
-	})
-}
 
-const saveFlowDesign=()=>{
-	let config = Configs.commit
-	let param = Params.commit
-	param["service"] = "FlowService"
-	param["action"] = "add"
-	param["data"] = data.flowDesignTemp
-	config["data"] = param
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		load.close()
-		if(res){
-			console.log(res)
-			ElMessage.success("ok")
-		}
-		
-	})
-}
+
+getAllFlow()
 </script>
 
 <template>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;" >
-				<el-button type="primary" plain @click="getAllFlow">getAllFlow</el-button>
-				<el-button type="primary" plain @click="getDesignTemp">add</el-button> 
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="getAllFlow">getAllFlow</el-button>
+		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button> 
 	</el-row>
 
-	<el-dialog v-model="data.dialogTableVisible" :close-on-click-modal="false">
-		<el-form ref="FlowDesignForm" label-width="120px">
-			<el-row>
-				<template v-for=" (value,index) in data.flowDesignTemp " >
-					<el-col :span='11'>
-						<el-form-item :label="index">
-							<el-input 
-							v-model="data.flowDesignTemp[index]"
-							clearable
-							>
-							</el-input>
-						</el-form-item>
-					</el-col>
-				</template>
-			</el-row>
-			<el-row>
-				<el-col :span="11" style="text-align: right; margin: 5px;">
-					  <el-button type="primary" @click="saveFlowDesign">Save</el-button>
-				</el-col>
-				<el-col :span="11" style="text-align: left; margin: 5px;">
-					  <el-button  @click="data.dialogTableVisible = false">Cancel</el-button>
-				</el-col>
-			</el-row>
-		</el-form>
+	<el-dialog v-model="data.showFwDesignAdd" :close-on-click-modal="false">
+		<BaseForm
+		:formData="data.flowDesignTemp"
+		@save="saveFlowDesign"
+		@cancel="data.showFwDesignAdd = false"
+		></BaseForm>
+	</el-dialog>
+	<el-dialog v-model="data.showFwDesignEdit" :close-on-click-modal="false">
+		<BaseForm
+		:formData="data.flowDesignTemp"
+		@save="editFlowDesign"
+		@cancel="data.showFwDesignEdit = false"
+		></BaseForm>
 	</el-dialog>
 	
 	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;">
-				<SingleTable 
-				ref="FlowTable"
-				:labels="data.flowLabels" 
-				:tableData="data.flowData"
-				@rowClick="getNodeList"
-				>
-					<template v-slot:operations="{scope_row}">
+		<SingleTable 
+		ref="FlowTable"
+		:labels="data.flowLabels" 
+		:tableData="data.flowData"
+		:colwidth="150"
+		@rowClick="getNodeList"
+		>
+<!-- 					<template v-slot:operations="{scope_row}">
+				<el-button
+					type="text"
+					size="small"
+					@click="instanceFlow(scope_row.id)"
+					>
+					实例化
+				</el-button>
+			</template> -->
+			<template v-slot:columnslot >
+				<el-table-column fixed="right" label="slot 操作栏" width="200" >
+					<template #default="scope">
 						<el-button
-							type="text"
+							type="primary"
 							size="small"
-							@click="instanceFlow(scope_row.id)"
+							@click="instanceFlow(scope.row)"
 							>
 							实例化
 						</el-button>
+						<el-button
+							type="primary"
+							size="small"
+							@click="openFwDesignEdit(scope.row)"
+							>
+							编辑
+						</el-button>
 					</template>
-					<template v-slot:columnslot>
-						<el-table-column fixed="right" label="slot 操作栏" width="200">
-							<template #default="scope">
-								<el-button
-									type="text"
-									size="small"
-									@click="instanceFlow(scope.row.id)"
-									>
-									实例化
-								</el-button>
-							</template>
-						</el-table-column>
-					</template>
-				</SingleTable>
-			</div>
-		</el-col>
+				</el-table-column>
+			</template>
+		</SingleTable>
 	</el-row>
-	<el-row >
-		<el-col :span="24" >
-			<div style="text-align: left; margin-top: 5px;">
-				<Pagination
-				:total = "data.flowTotal"
-				>
-				</Pagination>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin-top: 5px;">
+		<Pagination
+		:total = "data.flowTotal"
+		>
+		</Pagination>
 	</el-row>
 	<el-divider></el-divider>
 	<el-row>

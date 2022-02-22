@@ -5,7 +5,7 @@
 	// let isCollapse = ref(true)
 	// const abc = ref("qqqqqqq")
 	const data = reactive({
-		isCollapse: false,
+		isCollapse: true,
 	})
 	const clickCollapse = () => {
 		data.isCollapse = !data.isCollapse

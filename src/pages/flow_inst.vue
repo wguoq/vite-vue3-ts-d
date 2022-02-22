@@ -88,48 +88,36 @@ getAllFlowInst()
 </script>
 
 <template>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;" >
-				<el-button type="primary" plain @click="getAllFlowInst">getAllFlowInst</el-button>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="getAllFlowInst">getAllFlowInst</el-button>
 	</el-row>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;">
-				<SingleTable 
-				ref="FlowTable"
-				:labels="data.flowLabels" 
-				:tableData="data.flowData"
-				@rowClick="clickFlowInst"
-				>
-					<template v-slot:columnslot>
-						<el-table-column fixed="right" label="slot 操作栏" width="200">
-							<template #default="scope">
-								<el-button
-									type="text"
-									size="small"
-									@click="runFlowInst(scope.row.id)"
-									>
-									执行
-								</el-button>
-							</template>
-						</el-table-column>
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable 
+		ref="FlowTable"
+		:labels="data.flowLabels" 
+		:tableData="data.flowData"
+		@rowClick="clickFlowInst"
+		>
+			<template v-slot:columnslot>
+				<el-table-column fixed="right" label="slot 操作栏" width="200">
+					<template #default="scope">
+						<el-button
+							type="text"
+							size="small"
+							@click="runFlowInst(scope.row.id)"
+							>
+							执行
+						</el-button>
 					</template>
-				</SingleTable>
-			</div>
-		</el-col>
+				</el-table-column>
+			</template>
+		</SingleTable>
 	</el-row>
-	<el-row >
-		<el-col :span="24" >
-			<div style="text-align: left; margin-top: 5px;">
-				<Pagination
-				:total = "data.flowTotal"
-				>
-				</Pagination>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;">
+		<Pagination
+		:total = "data.flowTotal"
+		>
+		</Pagination>
 	</el-row>
 	<el-divider></el-divider>
 	<el-row>

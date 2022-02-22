@@ -50,7 +50,7 @@ const runCase = () =>{
 		let load = loading()
 		axiosSend(config).then( function (res){
 			console.log("res == ",res)
-			data.response = res.data
+			data.response = res.data.data
 			load.close()
 		})
 	}else{

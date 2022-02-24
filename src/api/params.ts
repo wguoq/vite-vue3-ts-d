@@ -15,7 +15,4 @@ class Commit{
 	data = ""
 }
 
-export const  query = new Query();
-export const  commit = new Commit();
-
-export default{query,commit};
+export default{Query,Commit};

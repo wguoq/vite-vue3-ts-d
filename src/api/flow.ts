@@ -1,17 +1,17 @@
-const query = {
-	url: "/flow/query/",
-	method: "get",
-	baseURL: "/api",
-	timeout: 3000,
-	params:""
+class Query{
+	url="/flow/query/"
+	method="get"
+	baseURL="/api"
+	timeout=5000
+	params=""
 }
 
-const commit = {
-	url: "/flow/commit/",
-	method: "post",
-	baseURL: "/api",
-	timeout: 3000,
-	data:""
+class Commit{
+	url="/flow/commit/"
+	method="post"
+	baseURL="/api"
+	timeout=5000
+	data=""
 }
 
-export default {query, commit}
+export default {Query, Commit}

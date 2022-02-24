@@ -3,11 +3,12 @@ import { reactive } from 'vue'
 
 interface Props{
 	formData: {},
+	disabledLabel: []
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	formData: {},
-
+	disabledLabel: []
 })
 
 
@@ -20,6 +21,16 @@ const Save =()=>{
 const Cancel =()=>{
 	emits('cancel')
 }
+
+const isdisabled =(data)=>{
+	for(let a of props.disabledLabel){
+		console.log(a)
+		if (a === data){
+			return true
+		}
+	}
+	return false
+}
 </script>
 
 <template>
@@ -31,7 +42,7 @@ const Cancel =()=>{
 				<el-col :span="11" style="margin: 2px;">
 					<el-form-item :label="index" >
 						<el-input
-						:disabled="(index === 'id')"
+						:disabled="isdisabled(index)"
 						v-model="props.formData[index]"
 						clearable
 						>

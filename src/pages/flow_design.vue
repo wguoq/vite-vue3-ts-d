@@ -17,9 +17,11 @@ const data = reactive({
 	nodeTotal: 0,
 	showFwDesignAdd: false,
 	showFwDesignEdit: false,
-	showNdDesignAdd: false,
-	showNdDesignEdit: false,
-	flowDesignTemp:{}
+	flowDesignTemp:{},
+	showFlowNodeAdd: false,
+	showFlowNodeEdit: false,
+	flowNodeTemp:{},
+
 })
 
 const FlowTable = ref()
@@ -29,8 +31,8 @@ import Configs from 'api/flow.ts'
 import Params from 'api/params.ts'
 
 function getAllFlow(){
-	let config = Configs.query
-	let param = Params.query
+	let config = new Configs.Query()
+	let param = new Params.Query()
 	param["service"] = "FlowDesignService"
 	param["action"] = "all"
 	config["params"] = param
@@ -56,10 +58,10 @@ function getAllFlow(){
 }
 
 const openFwDesignAdd=()=>{
-	let config = Configs.query
-	let param = Params.query
+	let config = new Configs.Query()
+	let param = new Params.Query()
 	param["service"] = "FlowDesignService"
-	param["action"] = "getDesignTemp"
+	param["action"] = "getTemp"
 	config["params"] = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
@@ -74,8 +76,8 @@ const openFwDesignAdd=()=>{
 }
 
 const saveFlowDesign=()=>{
-	let config = Configs.commit
-	let param = Params.commit
+	let config = new Configs.Commit()
+	let param = new Params.Commit()
 	param["service"] = "FlowDesignService"
 	param["action"] = "add"
 	param["data"] = data.flowDesignTemp
@@ -97,8 +99,8 @@ const openFwDesignEdit=(row)=>{
 }
 
 const editFlowDesign=()=>{
-	let config = Configs.commit
-	let param = Params.commit
+	let config = new Configs.Commit()
+	let param = new Params.Commit()
 	param["service"] = "FlowDesignService"
 	param["action"] = "edit"
 	param["data"] = data.flowDesignTemp
@@ -119,11 +121,11 @@ const getNodeList=()=>{
 	if (id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-		let config = Configs.query
-		let param = Params.query
-		param["service"] = "FlowDesignService"
-		param["action"] = "getNodeList"
-		param["filters"] = {"id":id}
+		let config = new Configs.Query()
+		let param = new Params.Query()
+		param["service"] = "FlowNodeService"
+		param["action"] = "filter"
+		param["filters"] = {"flow_design_id":id}
 		config["params"] = param
 		let load = loading()
 		axiosSend(config).then((res:any) => {
@@ -142,8 +144,8 @@ const getNodeList=()=>{
 }
 
 const instanceFlow=(row)=>{
-	let config = Configs.commit
-	let param = Params.commit
+	let config = new Configs.Commit()
+	let param = new Params.Commit()
 	param["service"] = "FlowService"
 	param["action"] = "instance"
 	param["data"] = {"id":row.id}
@@ -157,6 +159,36 @@ const instanceFlow=(row)=>{
 		
 	})
 }
+
+const openFlowNodeAdd=()=>{
+	let id = FlowTable.value.data.currentRow.id
+	if (id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		let config1 = new Configs.Query()
+		let param1 = new Params.Query()
+		param1["service"] = "FlowNodeService"
+		param1["action"] = "getTemp"
+		config1["params"] = param1
+		
+		let config2 = new Configs.Query()
+		let param2 = new Params.Query()
+		param2["service"] = "NodeDesignService"
+		param2["action"] = "getTemp"
+		config2["params"] = param2
+		
+		let load = loading()
+
+		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+			load.close()
+			data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
+			data.flowNodeTemp["flow_design"] = id
+			data.showFlowNodeAdd = true
+		}))
+	}
+}
+
+
 
 const show = (data) =>{
 	console.log("show data: ",data)
@@ -180,14 +212,16 @@ getAllFlow()
 		@cancel="data.showFwDesignAdd = false"
 		></BaseForm>
 	</el-dialog>
+	
 	<el-dialog v-model="data.showFwDesignEdit" :close-on-click-modal="false">
 		<BaseForm
 		:formData="data.flowDesignTemp"
+		:disabledLabel="['id','code']"
 		@save="editFlowDesign"
 		@cancel="data.showFwDesignEdit = false"
 		></BaseForm>
 	</el-dialog>
-	
+
 	<el-row>
 		<SingleTable 
 		ref="FlowTable"
@@ -196,7 +230,7 @@ getAllFlow()
 		:colwidth="150"
 		@rowClick="getNodeList"
 		>
-<!-- 					<template v-slot:operations="{scope_row}">
+			<template v-slot:operations="{scope_row}">
 				<el-button
 					type="text"
 					size="small"
@@ -204,7 +238,7 @@ getAllFlow()
 					>
 					实例化
 				</el-button>
-			</template> -->
+			</template>
 			<template v-slot:columnslot >
 				<el-table-column fixed="right" label="slot 操作栏" width="200" >
 					<template #default="scope">
@@ -227,20 +261,34 @@ getAllFlow()
 			</template>
 		</SingleTable>
 	</el-row>
+	
 	<el-row style="text-align: left; margin-top: 5px;">
 		<Pagination
 		:total = "data.flowTotal"
 		>
 		</Pagination>
 	</el-row>
+	
 	<el-divider></el-divider>
+	
 	<el-row>
 		<el-col :span="24">
 			<div style="text-align: left; margin: 5px;" >
 				<el-button type="primary" plain @click="getNodeList">getNodeList</el-button>
+				<el-button type="primary" plain @click="openFlowNodeAdd">新增</el-button> 
 			</div>
 		</el-col>
 	</el-row>
+	
+	<el-dialog v-model="data.showFlowNodeAdd" :close-on-click-modal="false">
+		<BaseForm
+		:formData="data.flowNodeTemp"
+		:disabledLabel="['flow_design']"
+		@save=""
+		@cancel="data.showFlowNodeAdd = false"
+		></BaseForm>
+	</el-dialog>
+	
 	<el-row>
 		<el-col :span="24">
 			<div style="text-align: left; margin: 5px;">

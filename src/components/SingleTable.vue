@@ -8,7 +8,7 @@ const data = reactive({
 
 const handleCurrentChange = (val: any | undefined) => {
   data.currentRow = val
-  emits('rowClick')
+  emits('rowClick',data.currentRow)
 }
 
 interface Props{

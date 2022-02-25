@@ -36,12 +36,8 @@ function getAllFlow(){
 	param["service"] = "FlowDesignService"
 	param["action"] = "all"
 	config["params"] = param
-	//开启loading
 	let load = loading()
 	axiosSend(config).then((res: any)=>{
-		// console.log("res == ",res)
-		//console.log("res.data == ",res.data)
-		//res.data取出来是string，要转成obj
 		load.close()
 		if(res){
 			let res_data = res.data
@@ -50,11 +46,6 @@ function getAllFlow(){
 			data.flowLabels = Object.keys(data.flowData[0])
 		}
 	})
-	//axios.all用于并发多个请求并且等待所有请求都完成
-	// axios.all([axiosSend(url),]).then(axios.spread(function (res1,){
-	// 	load.close()
-	// 	console.log("res1 == ",res1)
-	// }))
 }
 
 const openFwDesignAdd=()=>{
@@ -68,10 +59,9 @@ const openFwDesignAdd=()=>{
 		console.log(res.data)
 		load.close()
 		if(res){
-			data.flowDesignTemp = res.data.des
+			data.flowDesignTemp = res.data.rows
 			data.showFwDesignAdd = true
 		}
-		
 	})
 }
 
@@ -87,7 +77,8 @@ const saveFlowDesign=()=>{
 		load.close()
 		if(res){
 			getAllFlow()
-			data.showFwDesignAdd = false
+			data.showFlowNodeAdd = false
+			data.showFlowNodeEdit = false
 			ElMessage.success("ok")
 		}
 	})
@@ -96,24 +87,6 @@ const saveFlowDesign=()=>{
 const openFwDesignEdit=(row)=>{
 	data.flowDesignTemp = row
 	data.showFwDesignEdit = true
-}
-
-const editFlowDesign=()=>{
-	let config = new Configs.Commit()
-	let param = new Params.Commit()
-	param["service"] = "FlowDesignService"
-	param["action"] = "edit"
-	param["data"] = data.flowDesignTemp
-	config["data"] = param
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		load.close()
-		if(res){
-			getAllFlow()
-			data.showFwDesignEdit = false
-			ElMessage.success("ok")
-		}
-	})
 }
 
 const getNodeList=()=>{
@@ -183,11 +156,32 @@ const openFlowNodeAdd=()=>{
 			load.close()
 			data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
 			data.flowNodeTemp["flow_design"] = id
+			delete data.flowNodeTemp.node_design
+			delete data.flowNodeTemp.version
+			delete data.flowNodeTemp.ver_status
 			data.showFlowNodeAdd = true
 		}))
 	}
 }
 
+const saveflowNodeTemp=()=>{
+	let config = new Configs.Commit()
+	let param = new Params.Commit()
+	param["service"] = "FlowNodeService"
+	param["action"] = "add"
+	param["data"] = data.flowNodeTemp
+	config["data"] = param
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		if(res){
+			getNodeList()
+			data.showFlowNodeAdd = false
+			data.showFlowNodeEdit = false
+			ElMessage.success("ok")
+		}
+	})
+}
 
 
 const show = (data) =>{
@@ -208,6 +202,8 @@ getAllFlow()
 	<el-dialog v-model="data.showFwDesignAdd" :close-on-click-modal="false">
 		<BaseForm
 		:formData="data.flowDesignTemp"
+		:disabledLabel="[]"
+		:hideLabel="['version','ver_status']"
 		@save="saveFlowDesign"
 		@cancel="data.showFwDesignAdd = false"
 		></BaseForm>
@@ -217,7 +213,8 @@ getAllFlow()
 		<BaseForm
 		:formData="data.flowDesignTemp"
 		:disabledLabel="['id','code']"
-		@save="editFlowDesign"
+		:hideLabel="['version','ver_status']"
+		@save="saveFlowDesign"
 		@cancel="data.showFwDesignEdit = false"
 		></BaseForm>
 	</el-dialog>
@@ -284,7 +281,8 @@ getAllFlow()
 		<BaseForm
 		:formData="data.flowNodeTemp"
 		:disabledLabel="['flow_design']"
-		@save=""
+		:hideLabel="['version','ver_status']"
+		@save="saveflowNodeTemp"
 		@cancel="data.showFlowNodeAdd = false"
 		></BaseForm>
 	</el-dialog>

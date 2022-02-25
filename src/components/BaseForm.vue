@@ -3,12 +3,14 @@ import { reactive } from 'vue'
 
 interface Props{
 	formData: {},
-	disabledLabel: []
+	disabledLabel: [],
+	hideLabel: [],
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	formData: {},
-	disabledLabel: []
+	disabledLabel: [],
+	hideLabel: [],
 })
 
 
@@ -22,15 +24,17 @@ const Cancel =()=>{
 	emits('cancel')
 }
 
-const isdisabled =(data)=>{
-	for(let a of props.disabledLabel){
-		console.log(a)
-		if (a === data){
+const isInList =(data,list)=>{
+	for(let a of list){
+		if (a == data){
 			return true
+		}else{
+			continue
 		}
 	}
 	return false
 }
+
 </script>
 
 <template>
@@ -40,9 +44,9 @@ const isdisabled =(data)=>{
 			<el-row>
 			<template v-for=" (value,index) in props.formData " >
 				<el-col :span="11" style="margin: 2px;">
-					<el-form-item :label="index" >
+					<el-form-item :label="index" v-show="!isInList(index,props.hideLabel)">
 						<el-input
-						:disabled="isdisabled(index)"
+						:disabled="isInList(index,props.disabledLabel)"
 						v-model="props.formData[index]"
 						clearable
 						>
@@ -50,6 +54,11 @@ const isdisabled =(data)=>{
 					</el-form-item>
 				</el-col>	
 			</template>
+			</el-row>
+			<el-row>
+				<el-col :span="11">
+					<slot name="form-item-slot"></slot>
+				</el-col>
 			</el-row>
 			<el-row>
 				<el-col :span="11" style="text-align: right; margin: 5px;">

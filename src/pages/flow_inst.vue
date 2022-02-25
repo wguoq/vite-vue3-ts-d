@@ -22,35 +22,37 @@ import Configs from 'api/flow.ts'
 import Params from 'api/params.ts'
 
 function getAllFlowInst(){
-	let config = Configs.query
-	let param = Params.query
+	let config = new Configs.Query()
+	let param = new Params.Query()
 	param["service"] = "FlowInstService"
 	param["action"] = "all"
 	config["params"] = param
 	let load = loading()
-	axiosSend(config).then( function (res){
-		let res_data = res.data
-		data.flowData = res_data.rows
-		data.flowTotal = res_data.total
-		data.flowLabels = Object.keys(data.flowData[0])
+	axiosSend(config).then((res)=>{
 		load.close()
+		if(res.data.total > 0){
+			let res_data = res.data
+			data.flowData = res_data.rows
+			data.flowTotal = res_data.total
+			data.flowLabels = Object.keys(data.flowData[0])
+		}
 	})
 }
 
-const clickFlowInst = (row) =>{
+const getNodeInstList = (row) =>{
 	console.log("row_id: ",row.id)
 	if (row.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-		let config = Configs.query
-		let param = Params.query
+		let config = new Configs.Query()
+		let param = new Params.Query()
 		param["service"] = "NodeInstService"
 		param["action"] = "filter"
 		param["filters"] = {"flow_instance_id":row.id}
 		config["params"] = param
 		let load = loading()
 		axiosSend(config).then( function (res){
-			// console.log(res)
+			load.close()
 			let res_data = res.data
 			if (res_data.total > 0){
 				data.nodeData = res_data.rows
@@ -60,14 +62,13 @@ const clickFlowInst = (row) =>{
 				data.nodeData = []
 				data.nodeTotal = 0
 			}
-			load.close()
 		})
 	}
 }
 
 const runFlowInst=(id)=>{
-	let config = Configs.commit
-	let param = Params.commit
+	let config = new Configs.Commit()
+	let param = new Params.Commit()
 	param["service"] = "FlowInstService"
 	param["action"] = "run"
 	param["data"] = {"id":id}
@@ -96,7 +97,7 @@ getAllFlowInst()
 		ref="FlowTable"
 		:labels="data.flowLabels" 
 		:tableData="data.flowData"
-		@rowClick="clickFlowInst"
+		@rowClick="getNodeInstList"
 		>
 			<template v-slot:columnslot>
 				<el-table-column fixed="right" label="slot 操作栏" width="200">
@@ -123,7 +124,7 @@ getAllFlowInst()
 	<el-row>
 		<el-col :span="24">
 			<div style="text-align: left; margin: 5px;" >
-				<el-button type="primary" plain @click="getNodeList">getNodeList</el-button>
+				<el-button type="primary" plain @click="getNodeInstList">getNodeInstList</el-button>
 			</div>
 		</el-col>
 	</el-row>

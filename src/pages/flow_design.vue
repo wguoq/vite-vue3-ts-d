@@ -77,8 +77,8 @@ const saveFlowDesign=()=>{
 		load.close()
 		if(res){
 			getAllFlow()
-			data.showFlowNodeAdd = false
-			data.showFlowNodeEdit = false
+			data.showFwDesignAdd = false
+			data.showFwDesignEdit = false
 			ElMessage.success("ok")
 		}
 	})

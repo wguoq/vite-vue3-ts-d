@@ -62,48 +62,35 @@ const run = (id:any) =>{
 </script>
 
 <template>
-
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;" >
-				<el-button type="primary" plain @click="getAllCase">getAllCase</el-button>
-				<el-button type="primary" plain @click="runCase">runCase</el-button>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="getAllCase">getAllCase</el-button>
+		<el-button type="primary" plain @click="runCase">runCase</el-button>
 	</el-row>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;">
-				<SingleTable 
-				ref="testCaseTable"
-				:labels="data.labels" 
-				:tableData="data.tableData"
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable 
+		ref="testCaseTable"
+		:labels="data.labels" 
+		:tableData="data.tableData"
+		>
+		<!-- <template v-slot:test="{row}">  operations是子组件slot的name，row是slot设置的属性 -->
+		<!--<template v-slot:operations="{scope_row}">
+			<el-button
+				size="small"
+				@click="run(scope_row.id)"
 				>
-				<!-- <template v-slot:test="{row}">  operations是子组件slot的name，row是slot设置的属性 -->
-<!-- 				<template v-slot:operations="{scope_row}">
-					<el-button
-						size="small"
-						@click="run(scope_row.id)"
-						>
-						slot传入的按钮
-					</el-button>
-				</template> -->
-				<template v-slot="columnslot">
-					
-				</template>
-				</SingleTable>
-			</div>
-		</el-col>
+				slot传入的按钮
+			</el-button>
+		</template> -->
+		<template v-slot="columnslot">
+			
+		</template>
+		</SingleTable>
 	</el-row>
-	<el-row >
-		<el-col :span="24" >
-			<div style="text-align: left; margin-top: 5px;">
-				<Pagination
-				:total = "data.total"
-				>
-				</Pagination>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin-top: 5px;">
+		<Pagination
+		:total = "data.total"
+		>
+		</Pagination>
 	</el-row>
 	<p>{{data.response}}</p>
 </template>

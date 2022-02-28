@@ -117,36 +117,23 @@ getAllFlowInst()
 		>
 		</Pagination>
 	</el-row>
-	<el-divider></el-divider>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;" >
-				<el-button type="primary" plain @click="getNodeInstList">getNodeInstList</el-button>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;" >
+		<el-button type="primary" plain @click="getNodeInstList">getNodeInstList</el-button>
 	</el-row>
-	<el-row>
-		<el-col :span="24">
-			<div style="text-align: left; margin: 5px;">
-				<SingleTable 
-				ref="NodeTable"
-				:labels="data.nodeLabels" 
-				:tableData="data.nodeData"
-				>
-				</SingleTable>
-			</div>
-		</el-col>
+	<el-row style="text-align: left; margin: 5px;" >
+		<SingleTable 
+		ref="NodeTable"
+		:labels="data.nodeLabels" 
+		:tableData="data.nodeData"
+		>
+		</SingleTable>
 	</el-row>
-	<el-row >
-		<el-col :span="24" >
-			<div style="text-align: left; margin-top: 5px;">
-				<Pagination
-				:total = "data.nodeTotal"
-				>
-				</Pagination>
-			</div>
-		</el-col>
-	</el-row>
+	<el-row style="text-align: left; margin: 5px;" >
+		<Pagination
+		:total = "data.nodeTotal"
+		>
+		</Pagination>
+</el-row>
 </template>
 
 <style scoped>

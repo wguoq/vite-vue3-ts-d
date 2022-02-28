@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
+import BaseForm from 'components/BaseForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
@@ -11,7 +12,9 @@ const data = reactive({
 	labels: [""],
 	tableData: [""],
 	total: 0,
-	response:""
+	response:{},
+	showCaseResult: false,
+	type:"textarea"
 })
 
 const testCaseTable = ref()
@@ -24,7 +27,7 @@ const getAllCase=()=>{
 	config["params"] = params
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log("res == ",res)
+		// console.log("res == ",res)
 		let res_data = res.data
 		data.tableData.length = 0
 		data.tableData = res_data.rows
@@ -38,7 +41,7 @@ const getAllCase=()=>{
 const runCase = () =>{
 	if (testCaseTable.value.data.currentRow.id){
 		let id = testCaseTable.value.data.currentRow.id
-		console.log(id)
+		// console.log(id)
 		let config = new Configs.Commit()
 		let params = new Params.Commit()
 		params["service"] = "TesterService"
@@ -47,9 +50,10 @@ const runCase = () =>{
 		config["data"] = params
 		let load = loading()
 		axiosSend(config).then((res:any)=>{
-			console.log("res == ",res)
-			data.response = res.data.data
 			load.close()
+			// console.log(res)
+			data.response = res.data.data
+			data.showCaseResult = true
 		})
 	}else{
 		ElMessage.warning("没有选中数据")
@@ -66,6 +70,17 @@ const run = (id:any) =>{
 		<el-button type="primary" plain @click="getAllCase">getAllCase</el-button>
 		<el-button type="primary" plain @click="runCase">runCase</el-button>
 	</el-row>
+
+	<el-dialog v-model="data.showCaseResult" :close-on-click-modal="false">
+		<BaseForm
+		:formData="data.response"
+		:type="data.type"
+		:readOnly="true"
+		:noSave="true"
+		:noCancel="true"
+		></BaseForm>
+	</el-dialog>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable 
 		ref="testCaseTable"

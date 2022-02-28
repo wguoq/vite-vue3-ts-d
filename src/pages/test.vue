@@ -1,20 +1,26 @@
 <template>
   <el-form ref="formRef" :model="form" label-width="120px">
+	  <p>组件表</p>
 	  <el-row>
 		  <el-col :span="12">
-			  <el-form-item label="code">
+			  <el-form-item label="组件code">
 			    <el-input v-model="form.code"></el-input>
+			  </el-form-item>
+			  <el-form-item label="组件name">
+			    <el-input v-model="form.name"></el-input>
 			  </el-form-item>
 		  </el-col>
 	  </el-row>
+	<el-button type="primary" plain>save</el-button>
   </el-form>
+
   <el-divider></el-divider>
   
-  <div style="text-align: left; margin: 5px;" >
-  	<el-button type="primary" plain @click="form.dialogTableVisible = true">open</el-button>
+  <div style="text-align: left; margin: 10px;" >
+  	<el-button type="primary" plain @click="form.dialogTableVisible = true">open</el-button>  {{form.code}}
   </div>
-  
-  <el-dialog v-model="form.dialogTableVisible" title="address">
+  <p>组件和参数关系表</p>
+  <el-dialog v-model="form.dialogTableVisible" title="参数表" :close-on-click-modal="false">
  
   <div style="text-align: left; margin: 5px;" >
   	<el-button type="primary" plain @click="add">add</el-button>
@@ -27,7 +33,8 @@
     @selection-change="handleSelectionChange"
   >
     <el-table-column type="selection" width="55" />
-    <el-table-column label="Date" width="120">
+	<el-table-column property="id" label="id" width="120" />
+   <el-table-column label="Date" width="120">
       <template #default="scope">{{ scope.row.date }}</template>
     </el-table-column>
     <el-table-column property="name" label="Name" width="120" />
@@ -44,10 +51,10 @@
     @current-change="handleCurrentChange"
   >
     <el-table-column type="index" width="50" />
-	<el-table-column property="code" label="Code" width="120" />
-    <el-table-column property="date" label="Date" width="120" />
-    <el-table-column property="name" label="Name" width="120" />
-    <el-table-column property="address" label="Address" />
+	<el-table-column property="code" label="组件code" width="auto" />
+    <el-table-column property="id" label="参数id" width="auto" />
+<!--    <el-table-column property="name" label="Name" width="120" />
+    <el-table-column property="address" label="Address" /> -->
 </el-table>
   <el-divider></el-divider>
  
@@ -55,10 +62,26 @@
 
 <script lang="ts" setup>
 import { reactive } from 'vue'
-const dialogTableVisible = ref(false)
-// do not use same name with ref
-const form = reactive({
-  name: '',
+import { ref } from 'vue'
+import type { ElTable } from 'element-plus'
+
+interface form {
+  name: string,
+  code: string,
+  region: string,
+  date1: string,
+  date2: string,
+  delivery: boolean,
+  type: any[],
+  resource: string,
+  desc: string,
+  multipleSelection: User[],
+  singleTableData: Test[],
+  dialogTableVisible: boolean,
+}
+
+const form = reactive<form>({
+  name: "",
   code: '',
   region: '',
   date1: '',
@@ -75,13 +98,18 @@ const form = reactive({
 const onSubmit = () => {
   console.log('submit!')
 }
-import { ref } from 'vue'
-import type { ElTable } from 'element-plus'
+
 
 interface User {
+	id: number
   date: string
   name: string
   address: string
+}
+
+interface Test {
+	id?: any
+  code?:any
 }
 
 const multipleTableRef = ref<InstanceType<typeof ElTable>>()
@@ -99,17 +127,17 @@ const toggleSelection = (rows?: User[]) => {
 }
 const handleSelectionChange = (val: User[]) => {
   form.multipleSelection = val
-  console.log(form.multipleSelection)
 }
 const add = ()=>{
 	// console.log(multipleSelection.value)
 	// form.singleTableData = multipleSelection
 	// console.log(form.multipleSelection)
-	for (let i of  form.multipleSelection) {
-		console.log(i)
-		i.code = form.code
-		console.log(i)
-		form.singleTableData.push(i)
+  let i:User
+  let ax:Test = {}
+	for (i of form.multipleSelection) {
+		ax.code = form.code
+    ax.id = i.id
+		form.singleTableData.push(ax)
 	}
 	form.dialogTableVisible = false
 	
@@ -118,40 +146,30 @@ const add = ()=>{
 }
 const tableData: User[] = [
   {
+	  id: 1,
     date: '2016-05-03',
-    name: 'Tom',
+    name: '参数1',
     address: 'No. 189, Grove St, Los Angeles',
   },
   {
+	  id: 2,
     date: '2016-05-02',
-    name: 'Tom',
+    name: '参数2',
     address: 'No. 189, Grove St, Los Angeles',
   },
   {
+	  id: 3,
     date: '2016-05-04',
-    name: 'Tom',
+    name: '参数3',
     address: 'No. 189, Grove St, Los Angeles',
 
   },
   {
+	  id: 4,
     date: '2016-05-01',
-    name: 'Tom',
+    name: '参数4',
     address: 'No. 189, Grove St, Los Angeles',
   },
-  {
-    date: '2016-05-08',
-    name: 'Tom',
-    address: 'No. 189, Grove St, Los Angeles',
-  },
-  {
-    date: '2016-05-06',
-    name: 'Tom',
-    address: 'No. 189, Grove St, Los Angeles',
-  },
-  {
-    date: '2016-05-07',
-    name: 'Tom',
-    address: 'No. 189, Grove St, Los Angeles',
-  },
+
 ]
 </script>

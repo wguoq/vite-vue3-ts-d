@@ -54,7 +54,12 @@
 	// 	text: 'defaultText',
 	// 	items: ['de','fault']
 	// })
-	
+	// ts枚举类型
+	enum Color {
+		Red,
+		Green,
+		Blue
+	};
 	const abcd = ref<string>('')
 	//defineEmits是setup语法糖的api,用于定义父组件可以传入的事件名,vue写法
 	//const emits = defineEmits(['helloEmit001',])

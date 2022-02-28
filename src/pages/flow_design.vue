@@ -2,17 +2,18 @@
 import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
 import BaseForm from 'components/BaseForm.vue';
-
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import Cookies from 'js-cookie'
 import axios from 'axios';
+import { axiosSend, loading } from 'utils/http.ts'
+import Configs from 'api/flow.ts'
+import Params from 'api/params.ts'
 
 const data = reactive({
-	flowLabels:[],
+	flowLabels:[""],
 	flowData: [],
 	flowTotal: 0,
-	nodeLabels:[],
+	nodeLabels:[""],
 	nodeData: [],
 	nodeTotal: 0,
 	showFwDesignAdd: false,
@@ -25,10 +26,6 @@ const data = reactive({
 })
 
 const FlowTable = ref()
-
-import { axiosSend, loading } from 'utils/http.ts'
-import Configs from 'api/flow.ts'
-import Params from 'api/params.ts'
 
 function getAllFlow(){
 	let config = new Configs.Query()
@@ -84,7 +81,7 @@ const saveFlowDesign=()=>{
 	})
 }
 
-const openFwDesignEdit=(row)=>{
+const openFwDesignEdit=(row:any)=>{
 	data.flowDesignTemp = row
 	data.showFwDesignEdit = true
 }
@@ -116,7 +113,7 @@ const getNodeList=()=>{
 	}
 }
 
-const instanceFlow=(row)=>{
+const instanceFlow=(row:any)=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
 	param["service"] = "FlowService"
@@ -156,9 +153,6 @@ const openFlowNodeAdd=()=>{
 			load.close()
 			data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
 			data.flowNodeTemp["flow_design"] = id
-			delete data.flowNodeTemp.node_design
-			delete data.flowNodeTemp.version
-			delete data.flowNodeTemp.ver_status
 			data.showFlowNodeAdd = true
 		}))
 	}
@@ -184,7 +178,7 @@ const saveflowNodeTemp=()=>{
 }
 
 
-const show = (data) =>{
+const show = (data:any) =>{
 	console.log("show data: ",data)
 }
 
@@ -219,7 +213,7 @@ getAllFlow()
 		></BaseForm>
 	</el-dialog>
 
-	<el-row>
+	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable 
 		ref="FlowTable"
 		:labels="data.flowLabels" 
@@ -227,7 +221,7 @@ getAllFlow()
 		:colwidth="150"
 		@rowClick="getNodeList"
 		>
-			<template v-slot:operations="{scope_row}">
+<!-- 			<template v-slot:operations="{scope_row}">
 				<el-button
 					type="text"
 					size="small"
@@ -235,7 +229,7 @@ getAllFlow()
 					>
 					实例化
 				</el-button>
-			</template>
+			</template> -->
 			<template v-slot:columnslot >
 				<el-table-column fixed="right" label="slot 操作栏" width="200" >
 					<template #default="scope">

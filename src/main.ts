@@ -1,5 +1,4 @@
 import { createApp } from 'vue';
-import main from './main.vue';
 import index from './index.vue';
 import {store, key} from './store';
 // 会自动加载index.ts

@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { ref,reactive } from 'vue'
-import type { ElTable } from 'element-plus'
+import { reactive } from 'vue'
 
 const data = reactive({
 	currentRow: ""
@@ -12,15 +11,15 @@ const handleCurrentChange = (val: any | undefined) => {
 }
 
 interface Props{
-	labels: [],
-	tableData: [],
+	labels: any[],
+	tableData: any[],
 	colwidth?: any
 	
 }
 
 const props = withDefaults(defineProps<Props>(),{
-	labels: [],
-	tableData: [],
+	labels: ()=>[],
+	tableData: ()=>[],
 	colwidth: "auto",
 })
 
@@ -29,7 +28,7 @@ defineExpose({
 })
 
 const emits = defineEmits<{
-	(event: 'rowClick'):void,
+	(event: 'rowClick',row:any):void,
 }>()
 
 const show =()=>{
@@ -71,13 +70,13 @@ const show =()=>{
 				<!-- <slot></slot>标签表示可以接收一个父组件传入的新组件 -->
 				<!-- :row="scope.row" 加入一个row属性赋值为scope.row，给父组件用 -->
 					<slot name="operations" :scope_row="scope.row"></slot>
-					<el-button
+<!-- 					<el-button
 						type="text"
 						size="small"
 						@click="show()"
 						>
 						table自己的按钮
-					</el-button>
+					</el-button> -->
 			</template>
 		</el-table-column>
 		<slot v-if="props.tableData.length > 0" name="columnslot" ></slot>

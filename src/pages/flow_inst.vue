@@ -3,23 +3,20 @@ import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import Cookies from 'js-cookie'
-import axios from 'axios';
+import { axiosSend, loading } from 'utils/http.ts'
+import Configs from 'api/flow.ts'
+import Params from 'api/params.ts'
 
 const data = reactive({
-	flowLabels:[],
+	flowLabels:[""],
 	flowData: [],
 	flowTotal: 0,
-	nodeLabels:[],
+	nodeLabels:[""],
 	nodeData: [],
 	nodeTotal: 0,
 })
 
 const FlowTable = ref()
-
-import { axiosSend, loading } from 'utils/http.ts'
-import Configs from 'api/flow.ts'
-import Params from 'api/params.ts'
 
 function getAllFlowInst(){
 	let config = new Configs.Query()
@@ -28,7 +25,7 @@ function getAllFlowInst(){
 	param["action"] = "all"
 	config["params"] = param
 	let load = loading()
-	axiosSend(config).then((res)=>{
+	axiosSend(config).then((res:any)=>{
 		load.close()
 		if(res.data.total > 0){
 			let res_data = res.data
@@ -39,7 +36,7 @@ function getAllFlowInst(){
 	})
 }
 
-const getNodeInstList = (row) =>{
+const getNodeInstList = (row:any) =>{
 	console.log("row_id: ",row.id)
 	if (row.id == null){
 		ElMessage.warning("没有选中数据")
@@ -51,7 +48,7 @@ const getNodeInstList = (row) =>{
 		param["filters"] = {"flow_instance_id":row.id}
 		config["params"] = param
 		let load = loading()
-		axiosSend(config).then( function (res){
+		axiosSend(config).then((res:any)=>{
 			load.close()
 			let res_data = res.data
 			if (res_data.total > 0){
@@ -66,7 +63,7 @@ const getNodeInstList = (row) =>{
 	}
 }
 
-const runFlowInst=(id)=>{
+const runFlowInst=(id:any)=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
 	param["service"] = "FlowInstService"
@@ -74,7 +71,7 @@ const runFlowInst=(id)=>{
 	param["data"] = {"id":id}
 	config["data"] = param
 	let load = loading()
-	axiosSend(config).then( function (res){
+	axiosSend(config).then((res:any)=>{
 		console.log("res == ",res)
 		load.close()
 		if(res){

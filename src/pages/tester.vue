@@ -3,20 +3,18 @@ import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import Cookies from 'js-cookie'
+import { axiosSend, loading } from 'utils/http.ts'
+import Configs from 'api/tester.ts'
+import Params from 'api/params.ts'
 
 const data = reactive({
-	labels:[],
-	tableData: [],
+	labels: [""],
+	tableData: [""],
 	total: 0,
 	response:""
 })
 
 const testCaseTable = ref()
-
-import {httpError, axiosSend, loading } from 'utils/http.ts'
-import Configs from 'api/tester.ts'
-import Params from 'api/params.ts'
 
 const getAllCase=()=>{
 	let config = new Configs.Query()
@@ -25,7 +23,7 @@ const getAllCase=()=>{
 	params["action"] = "all"
 	config["params"] = params
 	let load = loading()
-	axiosSend(config).then( function (res){
+	axiosSend(config).then((res:any)=>{
 		console.log("res == ",res)
 		let res_data = res.data
 		data.tableData.length = 0
@@ -48,7 +46,7 @@ const runCase = () =>{
 		params["data"] = {"id":id}
 		config["data"] = params
 		let load = loading()
-		axiosSend(config).then( function (res){
+		axiosSend(config).then((res:any)=>{
 			console.log("res == ",res)
 			data.response = res.data.data
 			load.close()
@@ -58,7 +56,7 @@ const runCase = () =>{
 	}
 }
 
-const run = (id) =>{
+const run = (id:any) =>{
 	
 }
 </script>

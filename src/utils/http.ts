@@ -1,10 +1,10 @@
 import { ElMessage } from 'element-plus';
 import { ElLoading } from 'element-plus'
 import axios from 'axios';
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 
 
-export function httpError(error:any){
+function httpError(error:any){
 	if (error.response) {
 		const errorcode = error.response.status
 		const message = error.response.data.message
@@ -54,7 +54,7 @@ export function axiosSend(config: object){
 	}
 	
 	
-export function loading(text?:string = "loading...", timeout?: number = 30000){ 
+export function loading(text:string = "loading...", timeout: number = 10000){ 
 	const loading = ElLoading.service({
 		lock: true,
 		text: text,

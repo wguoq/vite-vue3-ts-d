@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-const input = ref('')
 import  { Search } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
-
+const input = ref('')
 const toHome = ()=>{
 	router.push({name: 'home'})
 }

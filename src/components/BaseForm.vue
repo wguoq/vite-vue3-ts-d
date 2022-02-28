@@ -2,15 +2,15 @@
 import { reactive } from 'vue'
 
 interface Props{
-	formData: {},
-	disabledLabel: [],
-	hideLabel: [],
+	formData: any,
+	disabledLabel: any[],
+	hideLabel: any[],
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	formData: {},
-	disabledLabel: [],
-	hideLabel: [],
+	disabledLabel: ()=>[],
+	hideLabel: ()=>[],
 })
 
 
@@ -24,7 +24,7 @@ const Cancel =()=>{
 	emits('cancel')
 }
 
-const isInList =(data,list)=>{
+const isInList =(data: any,list: any[])=>{
 	for(let a of list){
 		if (a == data){
 			return true

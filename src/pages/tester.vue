@@ -19,8 +19,8 @@ import Configs from 'api/tester.ts'
 import Params from 'api/params.ts'
 
 const getAllCase=()=>{
-	let config = Configs.queryCase
-	let params = Params.query
+	let config = new Configs.Query()
+	let params = new Params.Query()
 	params["service"] = "TestCaseService"
 	params["action"] = "all"
 	config["params"] = params
@@ -41,8 +41,8 @@ const runCase = () =>{
 	if (testCaseTable.value.data.currentRow.id){
 		let id = testCaseTable.value.data.currentRow.id
 		console.log(id)
-		let config = Configs.commitTester
-		let params = Params.commit
+		let config = new Configs.Commit()
+		let params = new Params.Commit()
 		params["service"] = "TesterService"
 		params["action"] = "run"
 		params["data"] = {"id":id}
@@ -82,16 +82,17 @@ const run = (id) =>{
 				:tableData="data.tableData"
 				>
 				<!-- <template v-slot:test="{row}">  operations是子组件slot的name，row是slot设置的属性 -->
-				<template v-slot:operations="{scope_row}">
+<!-- 				<template v-slot:operations="{scope_row}">
 					<el-button
 						size="small"
 						@click="run(scope_row.id)"
 						>
 						slot传入的按钮
 					</el-button>
+				</template> -->
+				<template v-slot="columnslot">
 					
 				</template>
-
 				</SingleTable>
 			</div>
 		</el-col>

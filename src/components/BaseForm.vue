@@ -43,8 +43,8 @@ const isInList =(data: any,list: any[])=>{
 		label-position="right" >
 			<el-row>
 			<template v-for=" (value,index) in props.formData " >
-				<el-col :span="11" style="margin: 2px;">
-					<el-form-item :label="index" v-show="!isInList(index,props.hideLabel)">
+				<el-col :span="11" style="margin: 2px;" v-show="!isInList(index,props.hideLabel)">
+					<el-form-item :label="index" >
 						<el-input
 						:disabled="isInList(index,props.disabledLabel)"
 						v-model="props.formData[index]"

@@ -3,14 +3,22 @@ import { reactive } from 'vue'
 
 interface Props{
 	formData: any,
-	disabledLabel: any[],
-	hideLabel: any[],
+	type?:string,
+	disabledLabel?: any[],
+	hideLabel?: any[],
+	readOnly?: boolean,
+	noSave?: boolean,
+	noCancel?: boolean,
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	formData: {},
+	type:"text",
 	disabledLabel: ()=>[],
 	hideLabel: ()=>[],
+	readOnly: false,
+	noSave: false,
+	noCancel: false,
 })
 
 
@@ -46,9 +54,11 @@ const isInList =(data: any,list: any[])=>{
 				<el-col :span="11" style="margin: 2px;" v-show="!isInList(index,props.hideLabel)">
 					<el-form-item :label="index" >
 						<el-input
-						:disabled="isInList(index,props.disabledLabel)"
+						:disabled="isInList(index,props.disabledLabel) || readOnly"
 						v-model="props.formData[index]"
 						clearable
+						:type="props.type"
+						autosize
 						>
 						</el-input>
 					</el-form-item>
@@ -61,10 +71,10 @@ const isInList =(data: any,list: any[])=>{
 				</el-col>
 			</el-row>
 			<el-row>
-				<el-col :span="11" style="text-align: right; margin: 5px;">
+				<el-col :span="11" style="text-align: right; margin: 5px;" v-if="!props.noSave">
 					  <el-button type="primary" @click="Save">Save</el-button>
 				</el-col>
-				<el-col :span="11" style="text-align: left; margin: 5px;">
+				<el-col :span="11" style="text-align: left; margin: 5px;" v-if="!props.noCancel">
 					  <el-button  @click="Cancel">Cancel</el-button>
 				</el-col>
 			</el-row>

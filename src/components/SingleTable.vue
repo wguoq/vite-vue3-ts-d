@@ -79,7 +79,7 @@ const show =()=>{
 					</el-button> -->
 			</template>
 		</el-table-column>
-		<slot v-if="props.tableData.length > 0" name="columnslot" ></slot>
+		<slot v-if="props.tableData.length > 0" name="SingleTableCol" ></slot>
 	</el-table>
 </template>
 

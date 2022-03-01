@@ -16,7 +16,9 @@ const data = reactive({
 	caseInfo:{},
 	showCaseResult: false,
 	showCaseInfo: false,
-	type:"textarea"
+	showCellInfo: false,
+	type:"textarea",
+	cellInfo:""
 })
 
 const testCaseTable = ref()
@@ -66,6 +68,17 @@ const showInfo = (row:any) =>{
 	data.caseInfo = row
 	data.showCaseInfo = true
 }
+
+const showCellInfo = (row:any,column:any) =>{
+	let key = column.property
+	if (typeof(row[key]) == "object"){
+		data.cellInfo = JSON.stringify(row[key])
+	}else{
+		data.cellInfo = row[key]
+	}
+	data.showCellInfo = true
+	
+}
 </script>
 
 <template>
@@ -94,11 +107,21 @@ const showInfo = (row:any) =>{
 		></BaseForm>
 	</el-dialog>
 
+	<el-dialog v-model="data.showCellInfo" :close-on-click-modal="false">
+		<el-input
+		v-model="data.cellInfo"
+		type="textarea"
+		autosize
+		>
+		</el-input>
+	</el-dialog>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable 
 		ref="testCaseTable"
 		:labels="data.labels" 
 		:tableData="data.tableData"
+		@cellDbclick="showCellInfo"
 		>
 		<!-- <template v-slot:test="{row}">  operations是子组件slot的name，row是slot设置的属性 -->
 		<!--<template v-slot:operations="{scope_row}">

@@ -29,11 +29,17 @@ defineExpose({
 
 const emits = defineEmits<{
 	(event: 'rowClick',row:any):void,
+	(event: 'cellDbclick',row:any,column:any):void,
 }>()
 
 const show =()=>{
 	console.log("table自己的按钮")
 }
+
+const celldblclick =(row:any, column:any, cell:any, event:any)=>{
+	emits('cellDbclick',row,column)
+}
+
 </script>
 
 <template>
@@ -44,6 +50,7 @@ const show =()=>{
 		highlight-current-row
 		border 
 		@current-change="handleCurrentChange"
+		@cell-dblclick="celldblclick"
 	>  
 		<el-table-column v-if="props.tableData.length > 0" type="index" width="50" />
 		<template v-for="label in props.labels">

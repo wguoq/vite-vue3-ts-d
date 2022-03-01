@@ -21,9 +21,9 @@ const FlowTable = ref()
 function getAllFlowInst(){
 	let config = new Configs.Query()
 	let param = new Params.Query()
-	param["service"] = "FlowInstService"
-	param["action"] = "all"
-	config["params"] = param
+	param.service = "FlowInstService"
+	param.action = "all"
+	config.params = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -43,10 +43,10 @@ const getNodeInstList = (row:any) =>{
 	}else{
 		let config = new Configs.Query()
 		let param = new Params.Query()
-		param["service"] = "NodeInstService"
-		param["action"] = "filter"
-		param["filters"] = {"flow_instance_id":row.id}
-		config["params"] = param
+		param.service = "NodeInstService"
+		param.action = "filter"
+		param.filters = {"flow_instance_id":row.id}
+		config.params = param
 		let load = loading()
 		axiosSend(config).then((res:any)=>{
 			load.close()
@@ -66,10 +66,10 @@ const getNodeInstList = (row:any) =>{
 const runFlowInst=(id:any)=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
-	param["service"] = "FlowInstService"
-	param["action"] = "run"
-	param["data"] = {"id":id}
-	config["data"] = param
+	param.service = "FlowInstService"
+	param.action = "run"
+	param.data = {"id":id}
+	config.data = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		console.log("res == ",res)
@@ -96,8 +96,8 @@ getAllFlowInst()
 		:tableData="data.flowData"
 		@rowClick="getNodeInstList"
 		>
-			<template v-slot:columnslot>
-				<el-table-column fixed="right" label="slot 操作栏" width="200">
+			<template v-slot:SingleTableCol>
+				<el-table-column fixed="right" label="操作栏" width="200">
 					<template #default="scope">
 						<el-button
 							type="text"

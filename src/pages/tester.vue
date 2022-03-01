@@ -46,10 +46,10 @@ const runCase = () =>{
 		// console.log(id)
 		let config = new Configs.Commit()
 		let params = new Params.Commit()
-		params["service"] = "TesterService"
-		params["action"] = "run"
-		params["data"] = {"id":id}
-		config["data"] = params
+		params.service = "TesterService"
+		params.action = "run"
+		params.data = {"id":id}
+		config.data = params
 		let load = loading()
 		axiosSend(config).then((res:any)=>{
 			load.close()

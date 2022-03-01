@@ -30,9 +30,9 @@ const FlowTable = ref()
 function getAllFlow(){
 	let config = new Configs.Query()
 	let param = new Params.Query()
-	param["service"] = "FlowDesignService"
-	param["action"] = "all"
-	config["params"] = param
+	param.service = "FlowDesignService"
+	param.action = "all"
+	config.params = param
 	let load = loading()
 	axiosSend(config).then((res: any)=>{
 		load.close()
@@ -48,9 +48,9 @@ function getAllFlow(){
 const openFwDesignAdd=()=>{
 	let config = new Configs.Query()
 	let param = new Params.Query()
-	param["service"] = "FlowDesignService"
-	param["action"] = "getTemp"
-	config["params"] = param
+	param.service = "FlowDesignService"
+	param.action = "getTemp"
+	config.params = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		console.log(res.data)
@@ -65,10 +65,10 @@ const openFwDesignAdd=()=>{
 const saveFlowDesign=()=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
-	param["service"] = "FlowDesignService"
-	param["action"] = "add"
-	param["data"] = data.flowDesignTemp
-	config["data"] = param
+	param.service = "FlowDesignService"
+	param.action = "add"
+	param.data = data.flowDesignTemp
+	config.data = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -93,10 +93,10 @@ const getNodeList=()=>{
 	}else{
 		let config = new Configs.Query()
 		let param = new Params.Query()
-		param["service"] = "FlowNodeService"
-		param["action"] = "filter"
-		param["filters"] = {"flow_design_id":id}
-		config["params"] = param
+		param.service = "FlowNodeService"
+		param.action = "filter"
+		param.filters = {"flow_design_id":id}
+		config.params = param
 		let load = loading()
 		axiosSend(config).then((res:any) => {
 			// console.log(res)
@@ -116,10 +116,10 @@ const getNodeList=()=>{
 const instanceFlow=(row:any)=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
-	param["service"] = "FlowService"
-	param["action"] = "instance"
-	param["data"] = {"id":row.id}
-	config["data"] = param
+	param.service = "FlowService"
+	param.action = "instance"
+	param.data = {"id":row.id}
+	config.data = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -137,15 +137,15 @@ const openFlowNodeAdd=()=>{
 	}else{
 		let config1 = new Configs.Query()
 		let param1 = new Params.Query()
-		param1["service"] = "FlowNodeService"
-		param1["action"] = "getTemp"
-		config1["params"] = param1
+		param1.service = "FlowNodeService"
+		param1.action = "getTemp"
+		config1.params = param1
 		
 		let config2 = new Configs.Query()
 		let param2 = new Params.Query()
-		param2["service"] = "NodeDesignService"
-		param2["action"] = "getTemp"
-		config2["params"] = param2
+		param2.service = "NodeDesignService"
+		param2.action = "getTemp"
+		config2.params = param2
 		
 		let load = loading()
 
@@ -161,10 +161,10 @@ const openFlowNodeAdd=()=>{
 const saveflowNodeTemp=()=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
-	param["service"] = "FlowNodeService"
-	param["action"] = "add"
-	param["data"] = data.flowNodeTemp
-	config["data"] = param
+	param.service = "FlowNodeService"
+	param.action = "add"
+	param.data = data.flowNodeTemp
+	config.data = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -230,8 +230,8 @@ getAllFlow()
 					实例化
 				</el-button>
 			</template> -->
-			<template v-slot:columnslot >
-				<el-table-column fixed="right" label="slot 操作栏" width="200" >
+			<template v-slot:SingleTableCol >
+				<el-table-column fixed="right" label="操作栏" width="200" >
 					<template #default="scope">
 						<el-button
 							type="primary"

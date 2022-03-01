@@ -9,11 +9,13 @@ import Configs from 'api/tester.ts'
 import Params from 'api/params.ts'
 
 const data = reactive({
-	labels: [""],
-	tableData: [""],
+	labels: [],
+	tableData: [],
 	total: 0,
-	response:{},
+	response: {},
+	caseInfo:{},
 	showCaseResult: false,
+	showCaseInfo: false,
 	type:"textarea"
 })
 
@@ -22,9 +24,9 @@ const testCaseTable = ref()
 const getAllCase=()=>{
 	let config = new Configs.Query()
 	let params = new Params.Query()
-	params["service"] = "TestCaseService"
-	params["action"] = "all"
-	config["params"] = params
+	params.service = "TestCaseService"
+	params.action = "all"
+	config.params = params
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		// console.log("res == ",res)
@@ -60,8 +62,9 @@ const runCase = () =>{
 	}
 }
 
-const run = (id:any) =>{
-	
+const showInfo = (row:any) =>{
+	data.caseInfo = row
+	data.showCaseInfo = true
 }
 </script>
 
@@ -74,6 +77,16 @@ const run = (id:any) =>{
 	<el-dialog v-model="data.showCaseResult" :close-on-click-modal="false">
 		<BaseForm
 		:formData="data.response"
+		:type="data.type"
+		:readOnly="true"
+		:noSave="true"
+		:noCancel="true"
+		></BaseForm>
+	</el-dialog>
+
+	<el-dialog v-model="data.showCaseInfo" :close-on-click-modal="false">
+		<BaseForm
+		:formData="data.caseInfo"
 		:type="data.type"
 		:readOnly="true"
 		:noSave="true"
@@ -96,8 +109,18 @@ const run = (id:any) =>{
 				slot传入的按钮
 			</el-button>
 		</template> -->
-		<template v-slot="columnslot">
-			
+		<template v-slot:SingleTableCol>
+			<el-table-column fixed="right" label="操作栏" width="200" >
+				<template #default="scope" v-show="scope.row">
+					<el-button
+						type="primary"
+						size="small"
+						@click="showInfo(scope.row)"
+						>
+						查看
+					</el-button>
+				</template>
+			</el-table-column>
 		</template>
 		</SingleTable>
 	</el-row>
@@ -107,7 +130,6 @@ const run = (id:any) =>{
 		>
 		</Pagination>
 	</el-row>
-	<p>{{data.response}}</p>
 </template>
 
 <style scoped>

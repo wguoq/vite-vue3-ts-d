@@ -2,6 +2,7 @@
 import SingleTable from 'components/SingleTable.vue';
 import Pagination from 'components/Pagination.vue';
 import BaseForm from 'components/BaseForm.vue';
+import EditForm from 'components/EditForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
@@ -16,12 +17,15 @@ const data = reactive({
 	nodeLabels:[""],
 	nodeData: [],
 	nodeTotal: 0,
-	showFwDesignAdd: false,
-	showFwDesignEdit: false,
+	showFlowDialog: false,
+	disabledLabel:[""],
+	hideLabel:[""],
 	flowDesignTemp:{},
-	showFlowNodeAdd: false,
-	showFlowNodeEdit: false,
+	showNodeDialog: false,
 	flowNodeTemp:{},
+	formType:"",
+	serviceName:"",
+	pk:""
 
 })
 
@@ -46,44 +50,23 @@ function getAllFlow(){
 }
 
 const openFwDesignAdd=()=>{
-	let config = new Configs.Query()
-	let param = new Params.Query()
-	param.service = "FlowDesignService"
-	param.action = "getTemp"
-	config.params = param
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
-		load.close()
-		if(res){
-			data.flowDesignTemp = res.data.rows
-			data.showFwDesignAdd = true
-		}
-	})
+	data.formType = "add"
+	data.serviceName = "FlowDesignService"
+	data.hideLabel = ["id","code"]
+	data.disabledLabel = ["created_time","modified_time"]
+	data.showFlowDialog = true
 }
 
-const saveFlowDesign=()=>{
-	let config = new Configs.Commit()
-	let param = new Params.Commit()
-	param.service = "FlowDesignService"
-	param.action = "add"
-	param.data = data.flowDesignTemp
-	config.data = param
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		load.close()
-		if(res){
-			getAllFlow()
-			data.showFwDesignAdd = false
-			data.showFwDesignEdit = false
-			ElMessage.success("ok")
-		}
-	})
+const afterSaveFlow=()=>{
+	data.showFlowDialog = false
+	getAllFlow()
 }
-
 const openFwDesignEdit=(row:any)=>{
-	data.flowDesignTemp = row
-	data.showFwDesignEdit = true
+	data.formType = "edit"
+	data.serviceName = "FlowDesignService"
+	data.pk = row.id
+	data.disabledLabel = ["id","code","created_time","modified_time"]
+	data.showFlowDialog = true
 }
 
 const getNodeList=()=>{
@@ -153,7 +136,7 @@ const openFlowNodeAdd=()=>{
 			load.close()
 			data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
 			data.flowNodeTemp["flow_design"] = id
-			data.showFlowNodeAdd = true
+			data.showNodeDialog = true
 		}))
 	}
 }
@@ -183,34 +166,26 @@ const show = (data:any) =>{
 }
 
 
-
 getAllFlow()
 </script>
 
 <template>
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="getAllFlow">getAllFlow</el-button>
-		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button> 
+		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button>
 	</el-row>
 
-	<el-dialog v-model="data.showFwDesignAdd" :close-on-click-modal="false">
-		<BaseForm
-		:formData="data.flowDesignTemp"
-		:disabledLabel="[]"
-		:hideLabel="['version','ver_status']"
-		@save="saveFlowDesign"
-		@cancel="data.showFwDesignAdd = false"
-		></BaseForm>
-	</el-dialog>
-	
-	<el-dialog v-model="data.showFwDesignEdit" :close-on-click-modal="false">
-		<BaseForm
-		:formData="data.flowDesignTemp"
-		:disabledLabel="['id','code']"
-		:hideLabel="['version','ver_status']"
-		@save="saveFlowDesign"
-		@cancel="data.showFwDesignEdit = false"
-		></BaseForm>
+	<el-dialog v-model="data.showFlowDialog" :close-on-click-modal="false">
+		<EditForm
+		ref="EditFormA" 
+		:formType = data.formType
+		:api = Configs
+		:pk = data.pk
+		:serviceName = data.serviceName
+		:disabledLabel= data.disabledLabel
+		:hideLabel= data.hideLabel
+		@afterSave="afterSaveFlow"
+		></EditForm>
 	</el-dialog>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -221,18 +196,11 @@ getAllFlow()
 		:colwidth="150"
 		@rowClick="getNodeList"
 		>
-<!-- 			<template v-slot:operations="{scope_row}">
-				<el-button
-					type="text"
-					size="small"
-					@click="instanceFlow(scope_row.id)"
-					>
-					实例化
-				</el-button>
-			</template> -->
 			<template v-slot:SingleTableCol >
 				<el-table-column fixed="right" label="操作栏" width="200" >
 					<template #default="scope">
+					<el-row>
+						<el-col :span="11">
 						<el-button
 							type="primary"
 							size="small"
@@ -240,6 +208,8 @@ getAllFlow()
 							>
 							实例化
 						</el-button>
+						</el-col>
+						<el-col :span="11">
 						<el-button
 							type="primary"
 							size="small"
@@ -247,6 +217,8 @@ getAllFlow()
 							>
 							编辑
 						</el-button>
+						</el-col>
+					</el-row>
 					</template>
 				</el-table-column>
 			</template>
@@ -265,13 +237,12 @@ getAllFlow()
 		<el-button type="primary" plain @click="openFlowNodeAdd">新增</el-button> 
 	</el-row>
 	
-	<el-dialog v-model="data.showFlowNodeAdd" :close-on-click-modal="false">
+	<el-dialog v-model="data.showNodeDialog" :close-on-click-modal="false">
 		<BaseForm
 		:formData="data.flowNodeTemp"
 		:disabledLabel="['flow_design']"
-		:hideLabel="['version','ver_status']"
+		:hideLabel="['version','ver_status','node_design']"
 		@save="saveflowNodeTemp"
-		@cancel="data.showFlowNodeAdd = false"
 		></BaseForm>
 	</el-dialog>
 	

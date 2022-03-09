@@ -7,7 +7,10 @@ const data = reactive({
 
 const handleCurrentChange = (val: any | undefined) => {
   data.currentRow = val
-  emits('rowClick',data.currentRow)
+}
+
+const rowClick = (row:any)=>{
+  emits('rowClick',row)
 }
 
 interface Props{
@@ -51,6 +54,7 @@ const celldblclick =(row:any, column:any, cell:any, event:any)=>{
 		border 
 		@current-change="handleCurrentChange"
 		@cell-dblclick="celldblclick"
+		@row-click="rowClick"
 	>  
 		<el-table-column v-if="props.tableData.length > 0" type="index" width="50" />
 		<template v-for="label in props.labels">

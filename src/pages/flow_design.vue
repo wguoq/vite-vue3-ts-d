@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
+import SingleTable2 from 'components/SingleTable2.vue';
 import Pagination from 'components/Pagination.vue';
 import BaseForm from 'components/BaseForm.vue';
 import EditForm from 'components/EditForm.vue';
@@ -21,11 +22,14 @@ const data = reactive({
 	disabledLabel:[""],
 	hideLabel:[""],
 	flowDesignTemp:{},
-	showNodeDialog: false,
+	showFlowNodeDialog: false,
 	flowNodeTemp:{},
 	formType:"",
+	action:"",
 	serviceName:"",
-	pk:""
+	pk:"",
+	fieldInfo: [""],
+	formData: {},
 
 })
 
@@ -50,7 +54,8 @@ function getAllFlow(){
 }
 
 const openFwDesignAdd=()=>{
-	data.formType = "add"
+	data.formType = "query"
+	data.action = "add"
 	data.serviceName = "FlowDesignService"
 	data.hideLabel = ["id","code"]
 	data.disabledLabel = ["created_time","modified_time"]
@@ -59,10 +64,11 @@ const openFwDesignAdd=()=>{
 
 const afterSaveFlow=()=>{
 	data.showFlowDialog = false
-	getAllFlow()
+	// getAllFlow()
 }
 const openFwDesignEdit=(row:any)=>{
-	data.formType = "edit"
+	data.formType = "query"
+	data.action = "edit"
 	data.serviceName = "FlowDesignService"
 	data.pk = row.id
 	data.disabledLabel = ["id","code","created_time","modified_time"]
@@ -118,26 +124,47 @@ const openFlowNodeAdd=()=>{
 	if (id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-		let config1 = new Configs.Query()
-		let param1 = new Params.Query()
-		param1.service = "FlowNodeService"
-		param1.action = "getTemp"
-		config1.params = param1
-		
-		let config2 = new Configs.Query()
-		let param2 = new Params.Query()
-		param2.service = "NodeDesignService"
-		param2.action = "getTemp"
-		config2.params = param2
-		
-		let load = loading()
 
-		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+		data.formType = "local"
+		data.action = "add"
+		data.serviceName = "FlowNodeService"
+		data.hideLabel = ["id","code"]
+		data.disabledLabel = ["flow_design","created_time","modified_time"]
+	
+		let config = new Configs.Query()
+		let param = new Params.Query()
+		param.service = "FlowNodeService"
+		param.action = "getFieldInfo"
+		config.params = param
+
+		let load = loading()
+		axiosSend(config).then((res:any)=>{
+			console.log(res.data)
 			load.close()
-			data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
-			data.flowNodeTemp["flow_design"] = id
-			data.showNodeDialog = true
-		}))
+			if(res){
+				data.fieldInfo = res.data.fields
+				for (let field of data.fieldInfo){
+					data.formData[field.name] = field.default
+					data.formData["flow_design"] = id
+				}
+				data.showFlowNodeDialog = true
+			}
+		})
+		
+		// let config2 = new Configs.Query()
+		// let param2 = new Params.Query()
+		// param2.service = "NodeDesignService"
+		// param2.action = "getTemp"
+		// config2.params = param2
+		
+		// let load = loading()
+
+		// axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+		// 	load.close()
+		// 	data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
+		// 	data.flowNodeTemp["flow_design"] = id
+		// 	data.showFlowNodeDialog = true
+		// }))
 	}
 }
 
@@ -160,12 +187,6 @@ const saveflowNodeTemp=()=>{
 	})
 }
 
-
-const show = (data:any) =>{
-	console.log("show data: ",data)
-}
-
-
 getAllFlow()
 </script>
 
@@ -178,7 +199,8 @@ getAllFlow()
 	<el-dialog v-model="data.showFlowDialog" :close-on-click-modal="false">
 		<EditForm
 		ref="EditFormA" 
-		:formType = data.formType
+		:formType= data.formType
+		:action = data.action
 		:api = Configs
 		:pk = data.pk
 		:serviceName = data.serviceName
@@ -187,6 +209,27 @@ getAllFlow()
 		@afterSave="afterSaveFlow"
 		></EditForm>
 	</el-dialog>
+
+	<el-dialog v-model="data.showFlowNodeDialog" :close-on-click-modal="false">
+		<EditForm
+		ref="EditFormB" 
+		:formType= data.formType
+		:action = data.action
+		:api = Configs
+		:pk = data.pk
+		:fieldInfo = data.fieldInfo
+		:formData = data.formData
+		:serviceName = data.serviceName
+		:disabledLabel= data.disabledLabel
+		:hideLabel= data.hideLabel
+		@afterSave="afterSaveFlow"
+		></EditForm>
+	</el-dialog>
+
+
+
+
+
 
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable 

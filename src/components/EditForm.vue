@@ -8,14 +8,24 @@ import { reactive, ref, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 import Params from 'api/params.ts'
 
+interface Field{
+        name:string 
+        verbose_name:string 
+        type:string 
+        primary_key:boolean 
+        max_length: number 
+        default: any 
+        help_text:string 
+}
+
 interface Props{
 	formType: "query"|"local",
 	action: string|null,
 	api:any|null,
 	serviceName: string|null,
 	pk?: any|null,
-	fieldInfo?: any[],
-	formData?: any,
+	fieldInfo?: Field[],
+	formData?: {[key: string]: any;},
 	disabledLabel?: any[],
 	hideLabel?: any[],
 	readOnly?: boolean,
@@ -29,17 +39,21 @@ const props = withDefaults(defineProps<Props>(),{
 	serviceName: null,
 	pk: null,
 	fieldInfo: ()=>[],
-	formData: ()=>{},
+	formData: ()=>{return {}},
 	disabledLabel: ()=>[],
 	hideLabel: ()=>[],
 	readOnly: false,
 	noSave: false,
 })
 
+interface Data {
+	fieldInfo:Field[]
+	formData:{[key: string]: any;}
+}
 
-const data = reactive({
-	fieldInfo: [""],
-	formData: {},
+const data = reactive<Data>({
+	fieldInfo: [],
+	formData:{},
 })
 
 const getFieldInfo=()=>{
@@ -73,7 +87,7 @@ const getData=()=>{
 		console.log(res.data)
 		load.close()
 		if(res){
-			data.formData = res.data.rows
+			data.formData = res.data.data
 		}
 	})
 }
@@ -87,32 +101,27 @@ const doSvae=()=>{
 	config.data = param
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
 		load.close()
 	})
 }
 
 function init(){
-	data.fieldInfo = []
-	data.formData = {}
 	if (props.formType === "local"){
 		data.fieldInfo = props.fieldInfo
 		data.formData = props.formData
 	}else if(props.formType === "query"){
 		getFieldInfo()
-		if (props.action === 'edit' && props.pk){
+		if (props.action === "edit" && props.pk){
 			getData()
 		}
 	}else{
 		return false
 	}
-
 }
 
 const emits = defineEmits<{
 	(event: 'beforeSave', data: any):void,
 	(event: 'afterSave', data: any):void,
-
 }>()
 
 const Save =()=>{
@@ -132,13 +141,14 @@ const isInList =(data: any,list: any[])=>{
 	return false
 }
 
-
-const getInputType=(type: string)=>{
-	if (type == "IntegerField"){
+const getInputType=(t: string)=>{
+	if (t == "IntegerField"){
 		return "number"
-	}else if (type == "DateTimeField"){
+	}else if (t == "DateTimeField"){
 		return "text"
 		// return "datetime"
+	}else if (t == "JSONField"){
+		return "textarea"
 	}
 }
 

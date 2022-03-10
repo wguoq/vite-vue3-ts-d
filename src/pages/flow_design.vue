@@ -1,15 +1,25 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
-import SingleTable2 from 'components/SingleTable2.vue';
+import SingleTableF from 'components/SingleTableF.vue';
 import Pagination from 'components/Pagination.vue';
 import BaseForm from 'components/BaseForm.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import axios from 'axios';
 import { axiosSend, loading } from 'utils/http.ts'
 import Configs from 'api/flow.ts'
 import Params from 'api/params.ts'
+import axios from 'axios';
+
+interface Data{
+	formData:{[key:string]:any}
+	fieldInfo:[]
+}
+
+const abcd = reactive<Data>({
+	formData:{},
+	fieldInfo:[]
+})
 
 const data = reactive({
 	flowLabels:[""],
@@ -30,10 +40,10 @@ const data = reactive({
 	pk:"",
 	fieldInfo: [""],
 	formData: {},
-
 })
 
 const FlowTable = ref()
+let FlowTableRow:any
 
 function getAllFlow(){
 	let config = new Configs.Query()
@@ -53,30 +63,7 @@ function getAllFlow(){
 	})
 }
 
-const openFwDesignAdd=()=>{
-	data.formType = "query"
-	data.action = "add"
-	data.serviceName = "FlowDesignService"
-	data.hideLabel = ["id","code"]
-	data.disabledLabel = ["created_time","modified_time"]
-	data.showFlowDialog = true
-}
-
-const afterSaveFlow=()=>{
-	data.showFlowDialog = false
-	// getAllFlow()
-}
-const openFwDesignEdit=(row:any)=>{
-	data.formType = "query"
-	data.action = "edit"
-	data.serviceName = "FlowDesignService"
-	data.pk = row.id
-	data.disabledLabel = ["id","code","created_time","modified_time"]
-	data.showFlowDialog = true
-}
-
-const getNodeList=()=>{
-	let id = FlowTable.value.data.currentRow.id
+const getNodeList=(id:any)=>{
 	if (id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
@@ -102,6 +89,34 @@ const getNodeList=()=>{
 	}
 }
 
+const rowClickFlowTable=(row:any)=>{
+	FlowTableRow = row
+	getNodeList(FlowTableRow.id)
+}
+
+const openFwDesignAdd=()=>{
+	data.formType = "query"
+	data.action = "add"
+	data.serviceName = "FlowDesignService"
+	data.hideLabel = ["id","code"]
+	data.disabledLabel = ["created_time","modified_time"]
+	data.showFlowDialog = true
+}
+
+const openFwDesignEdit=(row:any)=>{
+	data.formType = "query"
+	data.action = "edit"
+	data.serviceName = "FlowDesignService"
+	data.pk = row.id
+	data.disabledLabel = ["id","code","created_time","modified_time"]
+	data.showFlowDialog = true
+}
+
+const afterSaveFlow=()=>{
+	data.showFlowDialog = false
+	getAllFlow()
+}
+
 const instanceFlow=(row:any)=>{
 	let config = new Configs.Commit()
 	let param = new Params.Commit()
@@ -120,51 +135,60 @@ const instanceFlow=(row:any)=>{
 }
 
 const openFlowNodeAdd=()=>{
-	let id = FlowTable.value.data.currentRow.id
-	if (id == null){
+	if (FlowTableRow == null || FlowTableRow.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
 
 		data.formType = "local"
 		data.action = "add"
 		data.serviceName = "FlowNodeService"
-		data.hideLabel = ["id","code"]
-		data.disabledLabel = ["flow_design","created_time","modified_time"]
+		data.hideLabel = []
+		data.disabledLabel = ["flow_design"]
 	
-		let config = new Configs.Query()
-		let param = new Params.Query()
-		param.service = "FlowNodeService"
-		param.action = "getFieldInfo"
-		config.params = param
+		let config1 = new Configs.Query()
+		let param1 = new Params.Query()
+		param1.service = "FlowNodeService"
+		param1.action = "getFieldInfo"
+		config1.params = param1
+
+		let config2 = new Configs.Query()
+		let param2 = new Params.Query()
+		param2.service = "NodeDesignService"
+		param2.action = "getFieldInfo"
+		config2.params = param2
 
 		let load = loading()
-		axiosSend(config).then((res:any)=>{
-			console.log(res.data)
+		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
 			load.close()
-			if(res){
-				data.fieldInfo = res.data.fields
-				for (let field of data.fieldInfo){
-					data.formData[field.name] = field.default
-					data.formData["flow_design"] = id
+			console.log(res1.data.fields)
+			console.log(res2.data.fields)
+			let aaa = res1.data.fields
+			let bbb = res2.data.fields
+			let ccc = []
+			let arr = ["id","code","created_time","modified_time"]
+			for (let a of aaa){
+				if (arr.indexOf(a.name)>-1){
+					continue
+				}else if(a.name == "flow_design"){
+					data.formData[a.name] = FlowTableRow.id
+					ccc.push(a)
+				}else{
+					data.formData[a.name] = a.default
+					ccc.push(a)
 				}
-				data.showFlowNodeDialog = true
 			}
-		})
-		
-		// let config2 = new Configs.Query()
-		// let param2 = new Params.Query()
-		// param2.service = "NodeDesignService"
-		// param2.action = "getTemp"
-		// config2.params = param2
-		
-		// let load = loading()
-
-		// axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
-		// 	load.close()
-		// 	data.flowNodeTemp = Object.assign(res1.data.rows, res2.data.rows)
-		// 	data.flowNodeTemp["flow_design"] = id
-		// 	data.showFlowNodeDialog = true
-		// }))
+			for (let b of bbb){
+				if (arr.indexOf(b.name)>-1){
+					continue
+				}else{
+					data.formData[b.name] = b.default
+					ccc.push(b)
+				}
+			}
+			console.log(ccc);
+			data.fieldInfo = ccc		
+			data.showFlowNodeDialog = true
+		}))
 	}
 }
 
@@ -226,18 +250,13 @@ getAllFlow()
 		></EditForm>
 	</el-dialog>
 
-
-
-
-
-
-	<el-row style="text-align: left; margin: 5px;">
+	<!-- <el-row style="text-align: left; margin: 5px;">
 		<SingleTable 
 		ref="FlowTable"
 		:labels="data.flowLabels" 
 		:tableData="data.flowData"
 		:colwidth="150"
-		@rowClick="getNodeList"
+		@rowClick="rowClickFlowTable"
 		>
 			<template v-slot:SingleTableCol >
 				<el-table-column fixed="right" label="操作栏" width="200" >
@@ -266,8 +285,46 @@ getAllFlow()
 				</el-table-column>
 			</template>
 		</SingleTable>
+	</el-row> -->
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTableF 
+		ref="FlowTable"
+		tableType="query"
+		action="all"
+		:api="Configs"
+		serviceName="FlowDesignService"
+		:colwidth="150"
+		@rowClick="rowClickFlowTable"
+		>
+			<template v-slot:SingleTableCol >
+				<el-table-column fixed="right" label="操作栏" width="200" >
+					<template #default="scope">
+					<el-row>
+						<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="instanceFlow(scope.row)"
+							>
+							实例化
+						</el-button>
+						</el-col>
+						<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="openFwDesignEdit(scope.row)"
+							>
+							编辑
+						</el-button>
+						</el-col>
+					</el-row>
+					</template>
+				</el-table-column>
+			</template>
+		</SingleTableF>
 	</el-row>
-	
 	<el-row style="text-align: left; margin-top: 5px;">
 		<Pagination
 		:total = "data.flowTotal"
@@ -276,7 +333,6 @@ getAllFlow()
 	</el-row>
 	
 	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="getNodeList">getNodeList</el-button>
 		<el-button type="primary" plain @click="openFlowNodeAdd">新增</el-button> 
 	</el-row>
 	

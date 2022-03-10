@@ -5,7 +5,6 @@ class Query{
 	page= {
 		"pageSize": 10,
 		"pageNumber": 1,
-		"pageable": 'true'
 	}
 }
 

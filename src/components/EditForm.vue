@@ -130,6 +130,10 @@ const Save =()=>{
 	emits('afterSave',data.formData)
 }
 
+defineExpose({
+	data
+})
+
 const isInList =(data: any,list: any[])=>{
 	for(let a of list){
 		if (a == data){
@@ -177,12 +181,10 @@ watch(props,()=>init())
 				</el-col>	
 			</template>
 			</el-row>
-			<el-row>
-				<el-col :span="24" style="margin: 5px;" v-if="!props.noSave">
-					  <el-button type="primary" @click="Save">Save</el-button>
-				</el-col>
+			<el-row justify="center" v-if="!props.noSave">
+				<el-button type="primary" @click="Save">Save</el-button>
 			</el-row>
-			<slot></slot>
+			<slot name="formSlot"></slot>
 		</el-form>
 </template>
 

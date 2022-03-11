@@ -1,9 +1,7 @@
 <script lang="ts" setup>
-//1.tableType:"query"|"local" 决定查询数据还是使用传入的值
-//2.query模式根据传入的参数发起查询
+//只有query模式
 import { reactive, ref, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
-import Params from 'api/params.ts'
 
 interface Field{
         name:string 
@@ -16,47 +14,51 @@ interface Field{
 }
 
 interface Props{
-	tableType: "query"|"local",
-	action: string|null,
-	api:any|null,
-	serviceName: string|null,
-	filters?: {[key: string]: any;},
-	fieldInfo?: Field[],
-	tableData?: any[],
+	api:any,
+	action: string,
+	serviceName: string,
+	filters: {[key: string]: any;},
+	pageSize:number,
 	colwidth?: any,
-
+	
 }
 
 const props = withDefaults(defineProps<Props>(),{
-	tableType: "local",
-	action: null,
-	api:null,
-	serviceName: null,
-	filters:()=>{return {}},
-	fieldInfo:()=>[],
-	tableData:()=>[],
+	api:"",
+	action: "query",
+	serviceName: "",
+	filters: ()=>{return {}},
+	pageSize:10,
 	colwidth:"auto",
+
 })
 
 interface Data {
 	fieldInfo:Field[]
 	tableData:any[]
+	pageSize: number
+	currentPage:number
+	total:number
 }
 
 const data = reactive<Data>({
 	fieldInfo: [],
 	tableData:[],
+	pageSize:10,
+	currentPage:1,
+	total:0
+})
+
+defineExpose({
+	data
 })
 
 const getFieldInfo=()=>{
 	let config = new props.api.Query()
-	let param = new Params.Query()
-	param.service = props.serviceName
-	param.action = "getFieldInfo"
-	config.params = param
+	config.params.service = props.serviceName
+	config.params.action = "getFieldInfo"
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
 		load.close()
 		if(res){
 			data.fieldInfo = res.data.fields
@@ -66,32 +68,26 @@ const getFieldInfo=()=>{
 
 const filterData=()=>{
 	let config = new props.api.Query()
-	let param = new Params.Query()
-	param.service = props.serviceName
-	param.action = props.action
-	param.filters = props.filters
-	config.params = param
+	config.params.service = props.serviceName
+	config.params.action = props.action
+	config.params.filters = props.filters
+	config.params.pageSize = data.pageSize
+	config.params.pageNumber = data.currentPage
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
 		load.close()
 		if(res){
 			data.tableData = res.data.rows
+			data.total = res.data.total
 		}
 	})
 }
 
 
 function init(){
-	if (props.tableType === "local"){
-		data.fieldInfo = props.fieldInfo
-		data.tableData = props.tableData
-	}else if(props.tableType === "query"){
-		getFieldInfo()
-		filterData()
-	}else{
-		return false
-	}
+	data.pageSize = props.pageSize
+	getFieldInfo()
+	filterData()
 }
 
 
@@ -108,7 +104,10 @@ const emits = defineEmits<{
 const celldblclick =(row:any, column:any, cell:any, event:any)=>{
 	emits('cellDbclick',row,column)
 }
+const currentPageChange =()=>{
+	filterData()
 
+}
 init()
 watch(props,()=>init())
 </script>
@@ -133,33 +132,29 @@ watch(props,()=>init())
 			show-overflow-tooltip 
 			sortable
 			>
-				<!-- 要把json对象转成string才能显示出来 -->
-				<!-- #default="scope" 可以用scope.row来获取当前行数据scope.$index获取表格index -->
-				<template #default="scope">
-					<span>
-						{{scope.row[field.name]}}
-					</span>
-				</template>
+			<template #default="scope">
+				<span>
+					{{scope.row[field.name]}}
+				</span>
+			</template>
 			</el-table-column>
 		</template>
-		<el-table-column fixed="right" label="操作" width="200" v-if="false">
-			<!-- #default={row}就是只获取row数据=scope.row -->
-			<!-- <template #default={row}> -->
-			<template #default="scope">
-				<!-- <slot></slot>标签表示可以接收一个父组件传入的新组件 -->
-				<!-- :row="scope.row" 加入一个row属性赋值为scope.row，给父组件用 -->
-					<slot name="operations" :scope_row="scope.row"></slot>
-<!-- 					<el-button
-						type="text"
-						size="small"
-						@click="show()"
-						>
-						table自己的按钮
-					</el-button> -->
-			</template>
-		</el-table-column>
 		<slot v-if="data.tableData.length > 0" name="SingleTableCol" ></slot>
 	</el-table>
+	
+	<el-row style="text-align: left; margin-top: 5px;">
+		<el-pagination
+		v-model:currentPage="data.currentPage"
+		v-model:page-size="data.pageSize"
+		:total="data.total"
+		layout="total, prev, pager, next, jumper"
+		:background="true"
+		@size-change=""
+		@current-change="currentPageChange"
+		>
+		</el-pagination>
+	</el-row>
+
 </template>
 
 

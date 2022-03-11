@@ -12,14 +12,25 @@ import Params from 'api/params.ts'
 import axios from 'axios';
 
 interface Data{
-	formData:{[key:string]:any}
-	fieldInfo:[]
+	flowLabels:[""],
+	flowData: [],
+	flowTotal: 0,
+	nodeLabels:[""],
+	nodeData: [],
+	nodeTotal: 0,
+	showFlowDialog: false,
+	disabledLabel:[""],
+	hideLabel:[""],
+	flowDesignTemp:{},
+	showFlowNodeDialog: false,
+	flowNodeTemp:{},
+	formType:"",
+	action:"",
+	serviceName:"",
+	pk:"",
+	fieldInfo: [""],
+	formData: {},
 }
-
-const abcd = reactive<Data>({
-	formData:{},
-	fieldInfo:[]
-})
 
 const data = reactive({
 	flowLabels:[""],
@@ -40,28 +51,11 @@ const data = reactive({
 	pk:"",
 	fieldInfo: [""],
 	formData: {},
+	filters:{},
 })
 
 const FlowTable = ref()
 let FlowTableRow:any
-
-function getAllFlow(){
-	let config = new Configs.Query()
-	let param = new Params.Query()
-	param.service = "FlowDesignService"
-	param.action = "all"
-	config.params = param
-	let load = loading()
-	axiosSend(config).then((res: any)=>{
-		load.close()
-		if(res){
-			let res_data = res.data
-			data.flowData = res_data.rows
-			data.flowTotal = res_data.total
-			data.flowLabels = Object.keys(data.flowData[0])
-		}
-	})
-}
 
 const getNodeList=(id:any)=>{
 	if (id == null){
@@ -211,12 +205,10 @@ const saveflowNodeTemp=()=>{
 	})
 }
 
-getAllFlow()
 </script>
 
 <template>
 	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="getAllFlow">getAllFlow</el-button>
 		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button>
 	</el-row>
 
@@ -250,47 +242,10 @@ getAllFlow()
 		></EditForm>
 	</el-dialog>
 
-	<!-- <el-row style="text-align: left; margin: 5px;">
-		<SingleTable 
-		ref="FlowTable"
-		:labels="data.flowLabels" 
-		:tableData="data.flowData"
-		:colwidth="150"
-		@rowClick="rowClickFlowTable"
-		>
-			<template v-slot:SingleTableCol >
-				<el-table-column fixed="right" label="操作栏" width="200" >
-					<template #default="scope">
-					<el-row>
-						<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="instanceFlow(scope.row)"
-							>
-							实例化
-						</el-button>
-						</el-col>
-						<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="openFwDesignEdit(scope.row)"
-							>
-							编辑
-						</el-button>
-						</el-col>
-					</el-row>
-					</template>
-				</el-table-column>
-			</template>
-		</SingleTable>
-	</el-row> -->
-
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTableF 
 		ref="FlowTable"
-		tableType="query"
+		:pageSize="4"
 		action="all"
 		:api="Configs"
 		serviceName="FlowDesignService"
@@ -325,40 +280,25 @@ getAllFlow()
 			</template>
 		</SingleTableF>
 	</el-row>
-	<el-row style="text-align: left; margin-top: 5px;">
-		<Pagination
-		:total = "data.flowTotal"
-		>
-		</Pagination>
-	</el-row>
-	
+
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="openFlowNodeAdd">新增</el-button> 
 	</el-row>
 	
-	<el-dialog v-model="data.showNodeDialog" :close-on-click-modal="false">
-		<BaseForm
-		:formData="data.flowNodeTemp"
-		:disabledLabel="['flow_design']"
-		:hideLabel="['version','ver_status','node_design']"
-		@save="saveflowNodeTemp"
-		></BaseForm>
-	</el-dialog>
-	
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTable 
+		<SingleTableF 
 		ref="NodeTable"
-		:labels="data.nodeLabels" 
-		:tableData="data.nodeData"
+		tableType="query"
+		action="filter"
+		:api="Configs"
+		serviceName="FlowNodeService"
+		:filters= data.filters
+		:colwidth="150"
+		@rowClick="rowClickFlowTable"
 		>
-		</SingleTable>
+		</SingleTableF>
 	</el-row>
-	<el-row style="text-align: left; margin-top: 5px;">
-		<Pagination
-		:total = "data.nodeTotal"
-		>
-		</Pagination>
-	</el-row>
+
 </template>
 
 <style scoped>

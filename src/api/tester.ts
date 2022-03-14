@@ -3,7 +3,13 @@ class Query{
 	method="get"
 	baseURL="/api"
 	timeout=5000
-	params=""
+	params={
+		service:"",
+		action:"",
+		filters:{},
+		pageSize:1,
+		pageNumber:1,
+	}
 }
 
 class Commit{
@@ -11,7 +17,11 @@ class Commit{
 	method="post"
 	baseURL="/api"
 	timeout=5000
-	data=""
+	data={
+		service:"",
+		action:"",
+		data :{},
+	}
 }
 
 export default {Query, Commit}

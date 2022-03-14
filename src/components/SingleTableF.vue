@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-//只有query模式
+// 只有query模式
+// filters为null时不会发起查询数据，这是为了作为上下列表的下表时一开始不会查询
+// fieldInfo为null时才会发起查询fieldInfo，这是为了组合多表字段时从父组件获取
 import { reactive, ref, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 
@@ -17,8 +19,9 @@ interface Props{
 	api:any,
 	action: string,
 	serviceName: string,
-	filters: {[key: string]: any;},
+	filters?: {[key: string]: any;}|null,
 	pageSize:number,
+	fieldInfo?: Field[]|null,
 	colwidth?: any,
 	
 }
@@ -29,6 +32,7 @@ const props = withDefaults(defineProps<Props>(),{
 	serviceName: "",
 	filters: ()=>{return {}},
 	pageSize:10,
+	fieldInfo:()=>[],
 	colwidth:"auto",
 
 })
@@ -85,11 +89,19 @@ const filterData=()=>{
 
 
 function init(){
-	data.pageSize = props.pageSize
-	getFieldInfo()
-	filterData()
-}
+	if (props.fieldInfo){
+		data.fieldInfo = props.fieldInfo
+	}else{
+		getFieldInfo()
+	}
 
+	if (props.filters){
+		data.pageSize = props.pageSize
+		filterData()
+	}else{
+		data.tableData = []
+	}
+}
 
 const rowClick = (row:any)=>{
   emits('rowClick',row)
@@ -112,11 +124,11 @@ init()
 watch(props,()=>init())
 </script>
 
-<template>
+<template >
 	<el-table
 		:data="data.tableData"
 		style="width: 100%"
-		max-height="400"
+		max-height="300"
 		highlight-current-row
 		border 
 		@current-change=""

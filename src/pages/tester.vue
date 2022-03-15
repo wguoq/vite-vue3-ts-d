@@ -1,158 +1,124 @@
 <script lang="ts" setup>
-import SingleTable from 'components/SingleTable.vue';
-import Pagination from 'components/Pagination.vue';
-import BaseForm from 'components/BaseForm.vue';
+import SingleTableF from 'components/SingleTableF.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
-import Configs from 'api/tester.ts'
-import Params from 'api/params.ts'
+import TesterApi from 'api/tester.ts'
 
-const data = reactive({
-	labels: [],
-	tableData: [],
-	total: 0,
-	response: {},
-	caseInfo:{},
-	showCaseResult: false,
-	showCaseInfo: false,
-	showCellInfo: false,
-	type:"textarea",
-	cellInfo:""
+class TableProps{
+	api:any = ""
+	action: string = ""
+	serviceName: string = ""
+	filters: {[key: string]: any;}|null ={}
+	pageSize:number = 5
+	fieldInfo: any = []
+	colwidth: any = "auto"
+}
+
+class FormProps{
+	formType: "query"|"local" = "query"
+	action: string = ""
+	api:any = ""
+	serviceName: string = ""
+	pk: any = ""
+	fieldInfo: any[] = []
+	formData: {[key: string]: any;} = {}
+	disabledLabel: string[] = []
+	hideLabel: string[] = []
+	readOnly: boolean = false
+	noSave: boolean =false
+}
+
+interface Data{
+	testCaseTable:TableProps,
+	editForm:FormProps,
+	showDialog:boolean,
+	fieldInfo:[],
+}
+
+const data = reactive<Data>({
+	testCaseTable: new TableProps(),
+	editForm: new FormProps(),
+	showDialog:false,
+	fieldInfo:[]
+
 })
 
-const testCaseTable = ref()
+const TestCaseTable = ref()
+let TestCaseTableRow:any
+let runTcResult = ref()
 
-const getAllCase=()=>{
-	let config = new Configs.Query()
-	let params = new Params.Query()
-	params.service = "TestCaseService"
-	params.action = "all"
-	config.params = params
+function init(){
+
+	data.testCaseTable.api = TesterApi
+	data.testCaseTable.serviceName = "TestCaseService"
+	data.testCaseTable.action = "filter"
+	data.testCaseTable.pageSize = 5
+	data.testCaseTable.filters = {}
+	data.testCaseTable.fieldInfo = null
+	data.testCaseTable.colwidth = 150
+
+}
+
+const rowClickFlowInstTable=(row:any)=>{
+	TestCaseTableRow = row
+
+}
+
+
+
+const runTestCase=(row:any)=>{
+	let config = new TesterApi.Commit()
+	config.data.service = "FlowInstService"
+	config.data.action = "run"
+	config.data.data = {"id":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		// console.log("res == ",res)
-		let res_data = res.data
-		data.tableData.length = 0
-		data.tableData = res_data.rows
-		data.total = res_data.total
-		data.labels = Object.keys(data.tableData[0])
 		load.close()
+		if(res){
+			ElMessage.success("ok")
+			runTcResult = res
+		}
+		
 	})
 }
 
-
-const runCase = () =>{
-	if (testCaseTable.value.data.currentRow.id){
-		let id = testCaseTable.value.data.currentRow.id
-		// console.log(id)
-		let config = new Configs.Commit()
-		let params = new Params.Commit()
-		params.service = "TesterService"
-		params.action = "run"
-		params.data = {"id":id}
-		config.data = params
-		let load = loading()
-		axiosSend(config).then((res:any)=>{
-			load.close()
-			// console.log(res)
-			data.response = res.data.data
-			data.showCaseResult = true
-		})
-	}else{
-		ElMessage.warning("没有选中数据")
-	}
-}
-
-const showInfo = (row:any) =>{
-	data.caseInfo = row
-	data.showCaseInfo = true
-}
-
-const showCellInfo = (row:any,column:any) =>{
-	let key = column.property
-	if (typeof(row[key]) == "object"){
-		data.cellInfo = JSON.stringify(row[key])
-	}else{
-		data.cellInfo = row[key]
-	}
-	data.showCellInfo = true
-	
-}
+init()
 </script>
 
 <template>
 	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="getAllCase">getAllCase</el-button>
-		<el-button type="primary" plain @click="runCase">runCase</el-button>
-	</el-row>
-
-	<el-dialog v-model="data.showCaseResult" :close-on-click-modal="false">
-		<BaseForm
-		:formData="data.response"
-		:type="data.type"
-		:readOnly="true"
-		:noSave="true"
-		:noCancel="true"
-		></BaseForm>
-	</el-dialog>
-
-	<el-dialog v-model="data.showCaseInfo" :close-on-click-modal="false">
-		<BaseForm
-		:formData="data.caseInfo"
-		:type="data.type"
-		:readOnly="true"
-		:noSave="true"
-		:noCancel="true"
-		></BaseForm>
-	</el-dialog>
-
-	<el-dialog v-model="data.showCellInfo" :close-on-click-modal="false">
-		<el-input
-		v-model="data.cellInfo"
-		type="textarea"
-		autosize
+		<SingleTableF 
+		ref="TestCaseTable"
+		:api=data.testCaseTable.api
+		:action=data.testCaseTable.action
+		:serviceName=data.testCaseTable.serviceName
+		:filters = data.testCaseTable.filters
+		:pageSize=data.testCaseTable.pageSize
+		:fieldInfo=data.testCaseTable.fieldInfo
+		:colwidth=data.testCaseTable.colwidth
+		@rowClick="rowClickFlowInstTable"
 		>
-		</el-input>
-	</el-dialog>
-
-	<el-row style="text-align: left; margin: 5px;">
-		<SingleTable 
-		ref="testCaseTable"
-		:labels="data.labels" 
-		:tableData="data.tableData"
-		@cellDbclick="showCellInfo"
-		>
-		<!-- <template v-slot:test="{row}">  operations是子组件slot的name，row是slot设置的属性 -->
-		<!--<template v-slot:operations="{scope_row}">
-			<el-button
-				size="small"
-				@click="run(scope_row.id)"
-				>
-				slot传入的按钮
-			</el-button>
-		</template> -->
-		<template v-slot:SingleTableCol>
-			<el-table-column fixed="right" label="操作栏" width="200" >
-				<template #default="scope" v-show="scope.row">
-					<el-button
-						type="primary"
-						size="small"
-						@click="showInfo(scope.row)"
-						>
-						查看
-					</el-button>
-				</template>
-			</el-table-column>
-		</template>
-		</SingleTable>
+			<template v-slot:SingleTableCol >
+				<el-table-column fixed="right" label="操作栏" width="200" >
+					<template #default="scope">
+					<el-row>
+						<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="runTestCase(scope.row)"
+							>
+							运行
+						</el-button>
+						</el-col>
+					</el-row>
+					</template>
+				</el-table-column>
+			</template>
+		</SingleTableF>
 	</el-row>
-	<el-row style="text-align: left; margin-top: 5px;">
-		<Pagination
-		:total = "data.total"
-		>
-		</Pagination>
-	</el-row>
+	{{runTcResult}}
 </template>
 
 <style scoped>

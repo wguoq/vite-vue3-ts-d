@@ -6,7 +6,6 @@ import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import FlowApi from 'api/flow.ts'
 import axios from 'axios';
-import { Field } from '../components/PropsClass';
 
 class TableProps{
 	api:any = ""
@@ -37,7 +36,7 @@ interface Data{
 	flowNodeTable:TableProps,
 	editForm:FormProps,
 	showDialog:boolean,
-	fieldInfo:Field[],
+	fieldInfo:[],
 }
 
 const data = reactive<Data>({
@@ -59,7 +58,7 @@ function init(){
 
 		data.flowTable.api = FlowApi
 		data.flowTable.serviceName = "FlowDesignService"
-		data.flowTable.action = "all"
+		data.flowTable.action = "filter"
 		data.flowTable.pageSize = 5
 		data.flowTable.filters = {}
 		data.flowTable.fieldInfo = null
@@ -103,7 +102,6 @@ function init(){
 			}
 			data.flowNodeTable.fieldInfo =  ccc
 		}))
-
 }
 
 const rowClickFlowTable=(row:any)=>{
@@ -141,12 +139,10 @@ const afterSave=()=>{
 }
 
 const instanceFlow=(row:any)=>{
-	let config = new Configs.Commit()
-	let param = new Params.Commit()
-	param.service = "FlowService"
-	param.action = "instance"
-	param.data = {"id":row.id}
-	config.data = param
+	let config = new FlowApi.Commit()
+	config.data.service = "FlowService"
+	config.data.action = "instance"
+	config.data.data = {"id":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -161,8 +157,8 @@ const openFlowNodeAdd=()=>{
 	if (FlowTableRow == null || FlowTableRow.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-
 		data.editForm.formType = "local"
+		data.editForm.api =  FlowApi
 		data.editForm.action = "add"
 		data.editForm.serviceName = "FlowNodeService"
 		data.editForm.hideLabel = []
@@ -172,9 +168,20 @@ const openFlowNodeAdd=()=>{
 			data.editForm.formData[field.name] = field.default
 		}
 		data.editForm.formData["flow_design"] = FlowTableRow.id
-
 		data.showDialog = true
 	}
+}
+
+const openFlowNodeEdit=(row:any)=>{
+	data.editForm.formType = "local"
+	data.editForm.api =  FlowApi
+	data.editForm.action = "edit"
+	data.editForm.serviceName = "FlowNodeService"
+	data.editForm.hideLabel = []
+	data.editForm.disabledLabel = ["flow_design","node_design"]
+	data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
+	data.editForm.formData = row
+	data.showDialog = true
 }
 
 init()
@@ -260,6 +267,23 @@ init()
 		:colwidth=data.flowNodeTable.colwidth
 		@rowClick="rowClickFlowNodeTable"
 		>
+			<template v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="操作栏" width="100" >
+				<template #default="scope">
+				<el-row>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="openFlowNodeEdit(scope.row)"
+							>
+							编辑
+						</el-button>
+					</el-col>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
 		</SingleTableF>
 	</el-row>
 

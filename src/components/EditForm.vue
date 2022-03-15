@@ -4,26 +4,25 @@
 //3.action：edit模式需要知道service和pk，然后去获取model模板和get数据
 //4.根据模板和数据渲染表单
 //5.默认提供save方法
-import { reactive, ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
-import Params from 'api/params.ts'
 
 interface Field{
-        name:string 
-        verbose_name:string 
-        type:string 
-        primary_key:boolean 
-        max_length: number 
-        default: any 
-        help_text:string 
+	name:string 
+	verbose_name:string 
+	type:string 
+	primary_key:boolean 
+	max_length: number 
+	default: any 
+	help_text:string 
 }
 
 interface Props{
 	formType: "query"|"local",
-	action: string|null,
-	api:any|null,
-	serviceName: string|null,
-	pk?: any|null,
+	action: string,
+	api:any,
+	serviceName: string,
+	pk?: any,
 	fieldInfo?: Field[],
 	formData?: {[key: string]: any;},
 	disabledLabel?: any[],
@@ -34,10 +33,10 @@ interface Props{
 
 const props = withDefaults(defineProps<Props>(),{
 	formType:"query",
-	action: null,
-	api: null,
-	serviceName: null,
-	pk: null,
+	action: "",
+	api: "",
+	serviceName: "",
+	pk: "",
 	fieldInfo: ()=>[],
 	formData: ()=>{return {}},
 	disabledLabel: ()=>[],
@@ -58,10 +57,8 @@ const data = reactive<Data>({
 
 const getFieldInfo=()=>{
 	let config = new props.api.Query()
-	let param = new Params.Query()
-	param.service = props.serviceName
-	param.action = "getFieldInfo"
-	config.params = param
+	config.params.service = props.serviceName
+	config.params.action = "getFieldInfo"
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		console.log(res.data)
@@ -77,11 +74,9 @@ const getFieldInfo=()=>{
 
 const getData=()=>{
 	let config = new props.api.Query()
-	let param = new Params.Query()
-	param.service = props.serviceName
-	param.action = "get"
-	param.filters = {"pk":props.pk}
-	config.params = param
+	config.params.service = props.serviceName
+	config.params.action = "get"
+	config.params.filters = {"pk":props.pk}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		console.log(res.data)
@@ -94,11 +89,9 @@ const getData=()=>{
 
 const doSvae=()=>{
 	let config = new props.api.Commit()
-	let param = new Params.Commit()
-	param.service = props.serviceName
-	param.action = props.action
-	param.data = data.formData
-	config.data = param
+	config.data.service = props.serviceName
+	config.data.action = props.action
+	config.data.data = data.formData
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()

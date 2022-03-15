@@ -2,17 +2,17 @@
 // 只有query模式
 // filters为null时不会发起查询数据，这是为了作为上下列表的下表时一开始不会查询
 // fieldInfo为null时才会发起查询fieldInfo，这是为了组合多表字段时从父组件获取
-import { reactive, ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 
 interface Field{
-        name:string 
-        verbose_name:string 
-        type:string 
-        primary_key:boolean 
-        max_length: number 
-        default: any 
-        help_text:string 
+	name:string 
+	verbose_name:string 
+	type:string 
+	primary_key:boolean 
+	max_length: number 
+	default: any 
+	help_text:string 
 }
 
 interface Props{
@@ -137,6 +137,7 @@ watch(props,()=>init())
 	>  
 		<el-table-column v-if="data.tableData.length > 0" type="index" width="50" />
 		<template v-for="field in data.fieldInfo">
+			
 			<el-table-column 
 			:property="field.name" 
 			:label="field.verbose_name" 

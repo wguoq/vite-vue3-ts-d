@@ -19,7 +19,7 @@ function httpError(error:any){
 			ElMessage.error("404 访问资源不存在")
 			  break;
 		  case 500:
-			ElMessage.error('500 系统错误: '+message)
+			ElMessage.error('500 系统错误')
 			  break;
 		}
 	}else{

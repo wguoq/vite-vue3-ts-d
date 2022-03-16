@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import SingleTableF from 'components/SingleTableF.vue';
+import EditForm from 'components/EditForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
@@ -26,7 +27,7 @@ class FormProps{
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
-	noSave: boolean =false
+	noSave: boolean = false
 }
 
 interface Data{
@@ -41,12 +42,10 @@ const data = reactive<Data>({
 	editForm: new FormProps(),
 	showDialog:false,
 	fieldInfo:[]
-
 })
 
 const TestCaseTable = ref()
 let TestCaseTableRow:any
-let runTcResult = ref()
 
 function init(){
 
@@ -65,19 +64,32 @@ const rowClickFlowInstTable=(row:any)=>{
 
 }
 
-
+const editTestCase=(row:any)=>{
+	data.editForm.formType = "query"
+	data.editForm.action = "edit"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TestCaseService"
+	data.editForm.pk = row.id
+	data.editForm.readOnly = true
+	data.editForm.noSave = true
+	data.showDialog = true
+}
 
 const runTestCase=(row:any)=>{
 	let config = new TesterApi.Commit()
-	config.data.service = "FlowInstService"
+	config.data.service = "TesterService"
 	config.data.action = "run"
 	config.data.data = {"id":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
+		console.log(res);
 		if(res){
-			ElMessage.success("ok")
-			runTcResult = res
+			if (res.data.test_case_result == 'fail'){
+				ElMessage.warning(JSON.stringify(res.data))
+			}else{
+				ElMessage.success(JSON.stringify(res.data))
+			}
 		}
 		
 	})
@@ -87,6 +99,24 @@ init()
 </script>
 
 <template>
+
+	<el-dialog v-model="data.showDialog" :close-on-click-modal="false">
+		<EditForm
+		ref="DialogForm" 
+		:formType= data.editForm.formType
+		:action = data.editForm.action
+		:api = data.editForm.api
+		:serviceName = data.editForm.serviceName
+		:pk = data.editForm.pk
+		:fieldInfo = data.editForm.fieldInfo
+		:formData = data.editForm.formData
+		:disabledLabel= data.editForm.disabledLabel
+		:hideLabel= data.editForm.hideLabel
+		:readOnly = data.editForm.readOnly
+		:noSave = data.editForm.noSave
+		></EditForm>
+	</el-dialog>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTableF 
 		ref="TestCaseTable"
@@ -104,13 +134,22 @@ init()
 					<template #default="scope">
 					<el-row>
 						<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="runTestCase(scope.row)"
-							>
-							运行
-						</el-button>
+							<el-button
+								type="primary"
+								size="small"
+								@click="editTestCase(scope.row)"
+								>
+								详情
+							</el-button>
+						</el-col>
+						<el-col :span="11">
+							<el-button
+								type="primary"
+								size="small"
+								@click="runTestCase(scope.row)"
+								>
+								运行
+							</el-button>
 						</el-col>
 					</el-row>
 					</template>
@@ -118,7 +157,6 @@ init()
 			</template>
 		</SingleTableF>
 	</el-row>
-	{{runTcResult}}
 </template>
 
 <style scoped>

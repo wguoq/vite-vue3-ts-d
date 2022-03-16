@@ -156,11 +156,12 @@ watch(props,()=>init())
 
 <template>
 		<el-form 
+		label-position="top"
 		label-width="80px" 
-		label-position="right" >
+		 >
 			<el-row>
 			<template v-for=" field of data.fieldInfo " >
-				<el-col :span="11" style="margin: 2px;" v-show="!isInList(field.name,props.hideLabel)">
+				<el-col :span="11" style="margin-left: 5px;" v-show="!isInList(field.name,props.hideLabel)">
 					<el-form-item :label="field.verbose_name" >
 						<el-input
 						v-model = data.formData[field.name]

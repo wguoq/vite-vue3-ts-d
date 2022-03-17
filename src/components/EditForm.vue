@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-//1.formType："query"|"local" 决定查询数据还是使用传入的值
-//2.action：add模式需要知道service，然后去获取model模板
-//3.action：edit模式需要知道service和pk，然后去获取model模板和get数据
-//4.根据模板和数据渲染表单
-//5.默认提供save方法
+//1.props.fieldInfo为null时就查询fieldInfo；
+//2.props.formData为null并且pk！=null就查询数据
+//3.根据模板和数据渲染表单
+//4.默认提供save方法
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 
@@ -18,13 +17,12 @@ interface Field{
 }
 
 interface Props{
-	formType: "query"|"local",
 	action: string,
 	api:any,
 	serviceName: string,
 	pk?: any,
-	fieldInfo?: Field[],
-	formData?: {[key: string]: any;},
+	fieldInfo?: Field[]|null,
+	formData?: {[key: string]: any;}|null,
 	disabledLabel?: any[],
 	hideLabel?: any[],
 	readOnly?: boolean,
@@ -32,13 +30,12 @@ interface Props{
 }
 
 const props = withDefaults(defineProps<Props>(),{
-	formType:"query",
 	action: "",
 	api: "",
 	serviceName: "",
 	pk: "",
-	fieldInfo: ()=>[],
-	formData: ()=>{return {}},
+	fieldInfo: null,
+	formData: null,
 	disabledLabel: ()=>[],
 	hideLabel: ()=>[],
 	readOnly: false,
@@ -61,7 +58,7 @@ const getFieldInfo=()=>{
 	config.params.action = "getFieldInfo"
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
+		// console.log(res.data)
 		load.close()
 		if(res){
 			data.fieldInfo = res.data.fields
@@ -79,7 +76,7 @@ const getData=()=>{
 	config.params.filters = {"pk":props.pk}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
-		console.log(res.data)
+		// console.log(res.data)
 		load.close()
 		if(res){
 			data.formData = res.data.data
@@ -99,16 +96,15 @@ const doSvae=()=>{
 }
 
 function init(){
-	if (props.formType === "local"){
+	if (props.fieldInfo){
 		data.fieldInfo = props.fieldInfo
-		data.formData = props.formData
-	}else if(props.formType === "query"){
-		getFieldInfo()
-		if (props.action === "edit" && props.pk){
-			getData()
-		}
 	}else{
-		return false
+		getFieldInfo()
+	}
+	if (props.formData){
+		data.formData = props.formData
+	}else if(props.pk){
+		getData()
 	}
 }
 

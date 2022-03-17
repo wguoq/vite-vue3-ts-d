@@ -129,6 +129,7 @@ const openFwDesignEdit=(row:any)=>{
 	data.editForm.action = "edit"
 	data.editForm.serviceName = "FlowDesignService"
 	data.editForm.pk = row.id
+	data.editForm.hideLabel = []
 	data.editForm.disabledLabel = ["id","code","created_time","modified_time"]
 	data.showDialog = true
 }
@@ -178,7 +179,7 @@ const openFlowNodeEdit=(row:any)=>{
 	data.editForm.action = "edit"
 	data.editForm.serviceName = "FlowNodeService"
 	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["flow_design","node_design"]
+	data.editForm.disabledLabel = ["flow_design","node_design","version"]
 	data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
 	data.editForm.formData = row
 	data.showDialog = true
@@ -192,7 +193,11 @@ init()
 		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button>
 	</el-row>
 
-	<el-dialog v-model="data.showDialog" :close-on-click-modal="false">
+	<el-dialog v-model="data.showDialog" 
+	:close-on-click-modal="false"
+	destroy-on-close
+    center
+	>
 		<EditForm
 		ref="DialogForm" 
 		:formType= data.editForm.formType

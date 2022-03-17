@@ -1,5 +1,5 @@
 class Query{
-	url="/testcase/query/"
+	url="/tester/query/"
 	method="get"
 	baseURL="/api"
 	timeout=5000
@@ -7,7 +7,7 @@ class Query{
 		service:"",
 		action:"",
 		filters:{},
-		pageSize:1,
+		pageSize:5,
 		pageNumber:1,
 	}
 }

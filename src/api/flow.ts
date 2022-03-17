@@ -7,7 +7,7 @@ class Query{
 		service:"",
 		action:"",
 		filters:{},
-		pageSize:1,
+		pageSize:5,
 		pageNumber:1,
 	}
 }

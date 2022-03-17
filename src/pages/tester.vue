@@ -17,13 +17,12 @@ class TableProps{
 }
 
 class FormProps{
-	formType: "query"|"local" = "query"
 	action: string = ""
 	api:any = ""
 	serviceName: string = ""
 	pk: any = ""
-	fieldInfo: any[] = []
-	formData: {[key: string]: any;} = {}
+	fieldInfo: any[]|null = null
+	formData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
@@ -32,6 +31,7 @@ class FormProps{
 
 interface Data{
 	testCaseTable:TableProps,
+	tcDataTable:TableProps,
 	editForm:FormProps,
 	showDialog:boolean,
 	fieldInfo:[],
@@ -39,6 +39,7 @@ interface Data{
 
 const data = reactive<Data>({
 	testCaseTable: new TableProps(),
+	tcDataTable:new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
 	fieldInfo:[]
@@ -46,6 +47,9 @@ const data = reactive<Data>({
 
 const TestCaseTable = ref()
 let TestCaseTableRow:any
+const TcDataTable = ref()
+let TcDataTableRow:any
+
 
 function init(){
 
@@ -57,22 +61,46 @@ function init(){
 	data.testCaseTable.fieldInfo = null
 	data.testCaseTable.colwidth = 150
 
+	data.tcDataTable.api = TesterApi
+	data.tcDataTable.serviceName = "TcDataService"
+	data.tcDataTable.action = "filter"
+	data.tcDataTable.pageSize = 5
+	data.tcDataTable.filters = null
+	data.tcDataTable.fieldInfo = null
+	data.tcDataTable.colwidth = 150
+
 }
 
-const rowClickFlowInstTable=(row:any)=>{
+const rowTestCaseTable=(row:any)=>{
 	TestCaseTableRow = row
+	data.tcDataTable.filters = {"pk":row.id}
 
+}
+
+const openTestCaseAdd=()=>{
+	data.editForm.action = "add"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TestCaseService"
+	data.editForm.fieldInfo = null,
+	data.editForm.formData = null,
+	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.disabledLabel = ["version"]
+	data.showDialog = true
 }
 
 const editTestCase=(row:any)=>{
-	data.editForm.formType = "query"
 	data.editForm.action = "edit"
 	data.editForm.api = TesterApi
 	data.editForm.serviceName = "TestCaseService"
 	data.editForm.pk = row.id
-	data.editForm.readOnly = true
-	data.editForm.noSave = true
+	data.editForm.hideLabel = []
+	data.editForm.disabledLabel = ["id","code","created_time","modified_time","version"]
 	data.showDialog = true
+}
+
+const afterSave=()=>{
+	data.showDialog = false
+	init()
 }
 
 const runTestCase=(row:any)=>{
@@ -95,15 +123,32 @@ const runTestCase=(row:any)=>{
 	})
 }
 
+
+const openTcDataAdd=()=>{
+	data.editForm.action = "add"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TestCaseService"
+	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.disabledLabel = ["version"]
+	data.showDialog = true
+}
+
+
 init()
 </script>
 
 <template>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="openTestCaseAdd">新增</el-button>
+	</el-row>
 
-	<el-dialog v-model="data.showDialog" :close-on-click-modal="false">
+	<el-dialog 
+	v-model="data.showDialog" 
+	:close-on-click-modal="false"
+    center
+	>
 		<EditForm
 		ref="DialogForm" 
-		:formType= data.editForm.formType
 		:action = data.editForm.action
 		:api = data.editForm.api
 		:serviceName = data.editForm.serviceName
@@ -114,6 +159,7 @@ init()
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly
 		:noSave = data.editForm.noSave
+		@afterSave = "afterSave"
 		></EditForm>
 	</el-dialog>
 
@@ -127,7 +173,7 @@ init()
 		:pageSize=data.testCaseTable.pageSize
 		:fieldInfo=data.testCaseTable.fieldInfo
 		:colwidth=data.testCaseTable.colwidth
-		@rowClick="rowClickFlowInstTable"
+		@rowClick="rowTestCaseTable"
 		>
 			<template v-slot:SingleTableCol >
 				<el-table-column fixed="right" label="操作栏" width="200" >
@@ -139,7 +185,7 @@ init()
 								size="small"
 								@click="editTestCase(scope.row)"
 								>
-								详情
+								编辑
 							</el-button>
 						</el-col>
 						<el-col :span="11">
@@ -155,6 +201,23 @@ init()
 					</template>
 				</el-table-column>
 			</template>
+		</SingleTableF>
+	</el-row>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="openTcDataAdd">新增</el-button>
+	</el-row>
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTableF
+		ref="TcDataTable"
+		:api=data.tcDataTable.api
+		:action=data.tcDataTable.action
+		:serviceName=data.tcDataTable.serviceName
+		:filters = data.tcDataTable.filters
+		:pageSize=data.tcDataTable.pageSize
+		:fieldInfo=data.tcDataTable.fieldInfo
+		:colwidth=data.tcDataTable.colwidth
+		@rowClick=""
+		>
 		</SingleTableF>
 	</el-row>
 </template>

@@ -11,20 +11,19 @@ class TableProps{
 	api:any = ""
 	action: string = ""
 	serviceName: string = ""
-	filters: {[key: string]: any;}|null ={}
+	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
-	fieldInfo: any = []
+	fieldInfo: any = null
 	colwidth: any = "auto"
 }
 
 class FormProps{
-	formType: "query"|"local" = "query"
 	action: string = ""
 	api:any = ""
 	serviceName: string = ""
-	pk: any = ""
-	fieldInfo: any[] = []
-	formData: {[key: string]: any;} = {}
+	pk: any = null
+	fieldInfo: any[]|null = null
+	formData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
@@ -56,52 +55,52 @@ let FlowNodeTableRow:any
 
 function init(){
 
-		data.flowTable.api = FlowApi
-		data.flowTable.serviceName = "FlowDesignService"
-		data.flowTable.action = "filter"
-		data.flowTable.pageSize = 5
-		data.flowTable.filters = {}
-		data.flowTable.fieldInfo = null
-		data.flowTable.colwidth = 150
-		
-		data.flowNodeTable.api = FlowApi
-		data.flowNodeTable.serviceName = "FlowNodeService"
-		data.flowNodeTable.action = "filter"
-		data.flowNodeTable.pageSize = 5
-		data.flowNodeTable.filters = null
-		data.flowNodeTable.fieldInfo = []
-		data.flowNodeTable.colwidth = 150
+	data.flowTable.api = FlowApi
+	data.flowTable.serviceName = "FlowDesignService"
+	data.flowTable.action = "filter"
+	data.flowTable.pageSize = 5
+	data.flowTable.filters = {}
+	data.flowTable.fieldInfo = null
+	data.flowTable.colwidth = 150
+	
+	data.flowNodeTable.api = FlowApi
+	data.flowNodeTable.serviceName = "FlowNodeService"
+	data.flowNodeTable.action = "filter"
+	data.flowNodeTable.pageSize = 5
+	data.flowNodeTable.filters = null
+	data.flowNodeTable.fieldInfo = []
+	data.flowNodeTable.colwidth = 150
 
-		let config1 = new FlowApi.Query()
-		config1.params.service = "FlowNodeService"
-		config1.params.action = "getFieldInfo"
-		let config2 = new FlowApi.Query()
-		config2.params.service = "NodeDesignService"
-		config2.params.action = "getFieldInfo"
-		
-		let load = loading()
-		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
-			load.close()
-			let aaa = res1.data.fields
-			let bbb = res2.data.fields
-			let ccc:any[] = []
-			let arr = ["id","code","created_time","modified_time"]
-			for (let a of aaa){
-				if (arr.indexOf(a.name)>-1){
-					continue
-				}else{
-					ccc.push(a)
-				}
+	let config1 = new FlowApi.Query()
+	config1.params.service = "FlowNodeService"
+	config1.params.action = "getFieldInfo"
+	let config2 = new FlowApi.Query()
+	config2.params.service = "NodeDesignService"
+	config2.params.action = "getFieldInfo"
+	
+	let load = loading()
+	axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+		load.close()
+		let aaa = res1.data.fields
+		let bbb = res2.data.fields
+		let ccc:any[] = []
+		let arr = ["id","code","created_time","modified_time"]
+		for (let a of aaa){
+			if (arr.indexOf(a.name)>-1){
+				continue
+			}else{
+				ccc.push(a)
 			}
-			for (let b of bbb){
-				if (arr.indexOf(b.name)>-1){
-					continue
-				}else{
-					ccc.push(b)
-				}
+		}
+		for (let b of bbb){
+			if (arr.indexOf(b.name)>-1){
+				continue
+			}else{
+				ccc.push(b)
 			}
-			data.flowNodeTable.fieldInfo =  ccc
-		}))
+		}
+		data.flowNodeTable.fieldInfo =  ccc
+	}))
 }
 
 const rowClickFlowTable=(row:any)=>{
@@ -114,21 +113,23 @@ const rowClickFlowNodeTable=(row:any)=>{
 }
 
 const openFwDesignAdd=()=>{
-	data.editForm.formType = "query"
 	data.editForm.api = FlowApi
 	data.editForm.action = "add"
 	data.editForm.serviceName = "FlowDesignService"
+	data.editForm.fieldInfo = null,
+	data.editForm.formData = null,
 	data.editForm.hideLabel = ["id","code"]
 	data.editForm.disabledLabel = ["created_time","modified_time"]
 	data.showDialog = true
 }
 
 const openFwDesignEdit=(row:any)=>{
-	data.editForm.formType = "query"
 	data.editForm.api = FlowApi
 	data.editForm.action = "edit"
 	data.editForm.serviceName = "FlowDesignService"
 	data.editForm.pk = row.id
+	data.editForm.fieldInfo = null,
+	data.editForm.formData = null,
 	data.editForm.hideLabel = []
 	data.editForm.disabledLabel = ["id","code","created_time","modified_time"]
 	data.showDialog = true
@@ -136,7 +137,7 @@ const openFwDesignEdit=(row:any)=>{
 
 const afterSave=()=>{
 	data.showDialog = false
-	location.reload()
+	init()
 }
 
 const instanceFlow=(row:any)=>{
@@ -158,13 +159,14 @@ const openFlowNodeAdd=()=>{
 	if (FlowTableRow == null || FlowTableRow.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-		data.editForm.formType = "local"
 		data.editForm.api =  FlowApi
 		data.editForm.action = "add"
 		data.editForm.serviceName = "FlowNodeService"
+		data.editForm.pk = null
 		data.editForm.hideLabel = []
 		data.editForm.disabledLabel = ["flow_design","node_design"]
 		data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
+		data.editForm.formData = {}
 		for(let field of data.editForm.fieldInfo){
 			data.editForm.formData[field.name] = field.default
 		}
@@ -174,7 +176,6 @@ const openFlowNodeAdd=()=>{
 }
 
 const openFlowNodeEdit=(row:any)=>{
-	data.editForm.formType = "local"
 	data.editForm.api =  FlowApi
 	data.editForm.action = "edit"
 	data.editForm.serviceName = "FlowNodeService"
@@ -195,12 +196,10 @@ init()
 
 	<el-dialog v-model="data.showDialog" 
 	:close-on-click-modal="false"
-	destroy-on-close
     center
 	>
 		<EditForm
 		ref="DialogForm" 
-		:formType= data.editForm.formType
 		:action = data.editForm.action
 		:api = data.editForm.api
 		:serviceName = data.editForm.serviceName

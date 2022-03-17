@@ -183,3 +183,11 @@ watch(props,()=>init())
 </template>
 
 
+<style>
+.el-form--label-top .el-form-item__label {
+    display: block;
+    text-align: left;
+    padding: 0 0 1px 0;
+	margin-left: 5px;
+}
+</style>

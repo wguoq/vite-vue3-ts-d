@@ -23,7 +23,7 @@ class FormProps{
 	serviceName: string = ""
 	pk: any = null
 	fieldInfo: any[]|null = null
-	formData: {[key: string]: any;}|null = null
+	defData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
@@ -117,9 +117,9 @@ const openFwDesignAdd=()=>{
 	data.editForm.action = "add"
 	data.editForm.serviceName = "FlowDesignService"
 	data.editForm.fieldInfo = null,
-	data.editForm.formData = null,
-	data.editForm.hideLabel = ["id","code"]
-	data.editForm.disabledLabel = ["created_time","modified_time"]
+	data.editForm.defData = null,
+	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.disabledLabel = ["version"]
 	data.showDialog = true
 }
 
@@ -129,7 +129,7 @@ const openFwDesignEdit=(row:any)=>{
 	data.editForm.serviceName = "FlowDesignService"
 	data.editForm.pk = row.id
 	data.editForm.fieldInfo = null,
-	data.editForm.formData = null,
+	data.editForm.defData = null,
 	data.editForm.hideLabel = []
 	data.editForm.disabledLabel = ["id","code","created_time","modified_time"]
 	data.showDialog = true
@@ -166,11 +166,7 @@ const openFlowNodeAdd=()=>{
 		data.editForm.hideLabel = []
 		data.editForm.disabledLabel = ["flow_design","node_design"]
 		data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
-		data.editForm.formData = {}
-		for(let field of data.editForm.fieldInfo){
-			data.editForm.formData[field.name] = field.default
-		}
-		data.editForm.formData["flow_design"] = FlowTableRow.id
+		data.editForm.defData = {"flow_design":FlowTableRow.id}
 		data.showDialog = true
 	}
 }
@@ -179,10 +175,11 @@ const openFlowNodeEdit=(row:any)=>{
 	data.editForm.api =  FlowApi
 	data.editForm.action = "edit"
 	data.editForm.serviceName = "FlowNodeService"
+	data.editForm.pk = null
 	data.editForm.hideLabel = []
 	data.editForm.disabledLabel = ["flow_design","node_design","version"]
 	data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
-	data.editForm.formData = row
+	data.editForm.defData = row
 	data.showDialog = true
 }
 
@@ -205,7 +202,7 @@ init()
 		:serviceName = data.editForm.serviceName
 		:pk = data.editForm.pk
 		:fieldInfo = data.editForm.fieldInfo
-		:formData = data.editForm.formData
+		:defData = data.editForm.defData
 		:disabledLabel= data.editForm.disabledLabel
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly

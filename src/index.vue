@@ -14,6 +14,18 @@ if (env.MODE=="development"){
 
 
 <style>
+::-webkit-scrollbar{
+	width: 8px;
+	height: 8px;
+	background-color:aliceblue;
+}
+::-webkit-scrollbar-track{
+	border-radius: 1px;
+}
+::-webkit-scrollbar-thumb{
+	border-radius: 1px;
+	background:dodgerblue;
+}
 </style>
 
 

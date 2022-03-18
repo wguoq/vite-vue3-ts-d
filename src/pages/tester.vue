@@ -22,7 +22,7 @@ class FormProps{
 	serviceName: string = ""
 	pk: any = ""
 	fieldInfo: any[]|null = null
-	formData: {[key: string]: any;}|null = null
+	defData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
@@ -32,6 +32,7 @@ class FormProps{
 interface Data{
 	testCaseTable:TableProps,
 	tcDataTable:TableProps,
+	tcCheckTable:TableProps,
 	editForm:FormProps,
 	showDialog:boolean,
 	fieldInfo:[],
@@ -40,6 +41,7 @@ interface Data{
 const data = reactive<Data>({
 	testCaseTable: new TableProps(),
 	tcDataTable:new TableProps(),
+	tcCheckTable:new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
 	fieldInfo:[]
@@ -67,14 +69,26 @@ function init(){
 	data.tcDataTable.pageSize = 5
 	data.tcDataTable.filters = null
 	data.tcDataTable.fieldInfo = null
-	data.tcDataTable.colwidth = 150
+	data.tcDataTable.colwidth = "auto"
+
+	data.tcCheckTable.api = TesterApi
+	data.tcCheckTable.serviceName = "TcCheckPointService"
+	data.tcCheckTable.action = "filter"
+	data.tcCheckTable.pageSize = 5
+	data.tcCheckTable.filters = null
+	data.tcCheckTable.fieldInfo = null
+	data.tcCheckTable.colwidth = "auto"
 
 }
 
 const rowTestCaseTable=(row:any)=>{
 	TestCaseTableRow = row
-	data.tcDataTable.filters = {"pk":row.id}
+	data.tcDataTable.filters = {"test_case":row.id}
+}
 
+const rowTcDataTable=(row:any)=>{
+	TcDataTableRow = row
+	data.tcCheckTable.filters = {"tc_data":row.id}
 }
 
 const openTestCaseAdd=()=>{
@@ -82,7 +96,7 @@ const openTestCaseAdd=()=>{
 	data.editForm.api = TesterApi
 	data.editForm.serviceName = "TestCaseService"
 	data.editForm.fieldInfo = null,
-	data.editForm.formData = null,
+	data.editForm.defData = null,
 	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
 	data.editForm.disabledLabel = ["version"]
 	data.showDialog = true
@@ -123,16 +137,37 @@ const runTestCase=(row:any)=>{
 	})
 }
 
-
 const openTcDataAdd=()=>{
-	data.editForm.action = "add"
-	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TestCaseService"
-	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-	data.editForm.disabledLabel = ["version"]
-	data.showDialog = true
+		if (TestCaseTableRow == null || TestCaseTableRow.id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		data.editForm.action = "add"
+		data.editForm.api = TesterApi
+		data.editForm.serviceName = "TcDataService"
+		data.editForm.pk = null
+		data.editForm.fieldInfo = null
+		data.editForm.defData = {"test_case":TestCaseTableRow.id}
+		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+		data.editForm.disabledLabel = ["version","test_case"]
+		data.showDialog = true
+	}
 }
 
+const openTcCheckAdd=()=>{
+		if (TcDataTableRow == null || TcDataTableRow.id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		data.editForm.action = "add"
+		data.editForm.api = TesterApi
+		data.editForm.serviceName = "TcCheckPointService"
+		data.editForm.pk = null
+		data.editForm.fieldInfo = null
+		data.editForm.defData = {"tc_data":TcDataTableRow.id}
+		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+		data.editForm.disabledLabel = ["version","tc_data"]
+		data.showDialog = true
+	}
+}
 
 init()
 </script>
@@ -154,7 +189,7 @@ init()
 		:serviceName = data.editForm.serviceName
 		:pk = data.editForm.pk
 		:fieldInfo = data.editForm.fieldInfo
-		:formData = data.editForm.formData
+		:defData = data.editForm.defData
 		:disabledLabel= data.editForm.disabledLabel
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly
@@ -216,6 +251,23 @@ init()
 		:pageSize=data.tcDataTable.pageSize
 		:fieldInfo=data.tcDataTable.fieldInfo
 		:colwidth=data.tcDataTable.colwidth
+		@rowClick="rowTcDataTable"
+		>
+		</SingleTableF>
+	</el-row>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="openTcCheckAdd">新增</el-button>
+	</el-row>
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTableF
+		ref="TcCheckTable"
+		:api=data.tcCheckTable.api
+		:action=data.tcCheckTable.action
+		:serviceName=data.tcCheckTable.serviceName
+		:filters = data.tcCheckTable.filters
+		:pageSize=data.tcCheckTable.pageSize
+		:fieldInfo=data.tcCheckTable.fieldInfo
+		:colwidth=data.tcCheckTable.colwidth
 		@rowClick=""
 		>
 		</SingleTableF>

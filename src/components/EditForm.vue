@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 //1.props.fieldInfo为null时就查询fieldInfo；
-//2.props.formData为null并且pk！=null就查询数据
-//3.根据模板和数据渲染表单
-//4.默认提供save方法
+//2.props.pk=null时就不查询，用fieldInfo组装出data.formData
+//3.在2.的情况下props.defData!=null时就把里面的数据赋值给data.formData
+//4.props.pk!=null时，用pk去查询数据赋值给data.formData，并忽略props.defData
+//5.默认提供save方法
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
+import axios from 'axios';
 
 interface Field{
 	name:string 
@@ -20,9 +22,9 @@ interface Props{
 	action: string,
 	api:any,
 	serviceName: string,
-	pk?: any,
+	pk?: any|null,
 	fieldInfo?: Field[]|null,
-	formData?: {[key: string]: any;}|null,
+	defData?: {[key: string]: any;}|null,
 	disabledLabel?: any[],
 	hideLabel?: any[],
 	readOnly?: boolean,
@@ -36,6 +38,7 @@ const props = withDefaults(defineProps<Props>(),{
 	pk: "",
 	fieldInfo: null,
 	formData: null,
+	defData:null,
 	disabledLabel: ()=>[],
 	hideLabel: ()=>[],
 	readOnly: false,
@@ -52,38 +55,6 @@ const data = reactive<Data>({
 	formData:{},
 })
 
-const getFieldInfo=()=>{
-	let config = new props.api.Query()
-	config.params.service = props.serviceName
-	config.params.action = "getFieldInfo"
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		// console.log(res.data)
-		load.close()
-		if(res){
-			data.fieldInfo = res.data.fields
-			for (let field of data.fieldInfo){
-				data.formData[field.name] = field.default
-			}
-		}
-	})
-}
-
-const getData=()=>{
-	let config = new props.api.Query()
-	config.params.service = props.serviceName
-	config.params.action = "get"
-	config.params.filters = {"pk":props.pk}
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		// console.log(res.data)
-		load.close()
-		if(res){
-			data.formData = res.data.data
-		}
-	})
-}
-
 const doSvae=()=>{
 	let config = new props.api.Commit()
 	config.data.service = props.serviceName
@@ -95,18 +66,57 @@ const doSvae=()=>{
 	})
 }
 
-function init(){
-	if (props.fieldInfo){
-		data.fieldInfo = props.fieldInfo
-	}else{
-		getFieldInfo()
-	}
-	if (props.formData){
-		data.formData = props.formData
-	}else if(props.pk){
-		getData()
+const setDefData=()=>{
+	if(props.defData){
+		let keys = Object.keys(data.formData)
+		for (let k of keys){
+			if (props.defData[k]){
+				data.formData[k] = props.defData[k]
+			}else{
+				continue
+			}
+		}
 	}
 }
+
+function init(){
+	data.fieldInfo = []
+	data.formData = {}
+	//由于axios是异步的，需要分情况处理
+	let config1 = new props.api.Query()
+	config1.params.service = props.serviceName
+	config1.params.action = "getFieldInfo"
+	let config2 = new props.api.Query()
+	config2.params.service = props.serviceName
+	config2.params.action = "get"
+	config2.params.filters = {"pk":props.pk}
+	if (props.pk && !props.fieldInfo){
+		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+			data.fieldInfo = res1.data.fields
+			data.formData = res2.data.data
+		}))
+	}else if (props.pk && props.fieldInfo){
+		axiosSend(config2).then((res:any)=>{
+			data.formData = res.data.data
+			data.fieldInfo = props.fieldInfo
+		})
+	}else if(!props.pk && !props.fieldInfo){
+		axiosSend(config1).then((res:any)=>{
+			data.fieldInfo = res.data.fields
+			for (let f of data.fieldInfo){
+				data.formData[f.name] = f.default
+			}
+			setDefData()
+		})
+	}else if (!props.pk && props.fieldInfo){
+		data.fieldInfo = props.fieldInfo
+		for (let f of data.fieldInfo){
+				data.formData[f.name] = f.default
+			}
+		setDefData()
+		}
+	}
+
 
 const emits = defineEmits<{
 	(event: 'beforeSave', data: any):void,

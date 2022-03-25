@@ -8,14 +8,14 @@ import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 import axios from 'axios';
 
-interface Field{
-	name:string 
-	verbose_name:string 
-	type:string 
-	primary_key:boolean 
-	max_length: number 
-	default: any 
-	help_text:string 
+class Field{
+	name:string = ""
+	verbose_name:string = ""
+	type:string = ""
+	primary_key:boolean = false 
+	max_length: number = 0
+	default: any = ""
+	help_text:string = ""
 }
 
 interface Props{
@@ -46,12 +46,12 @@ const props = withDefaults(defineProps<Props>(),{
 })
 
 interface Data {
-	fieldInfo:Field[]
+	fieldInfo:Field[] | null
 	formData:{[key: string]: any;}
 }
 
 const data = reactive<Data>({
-	fieldInfo: [],
+	fieldInfo: [new Field()],
 	formData:{},
 })
 
@@ -80,43 +80,48 @@ const setDefData=()=>{
 }
 
 function init(){
-	data.fieldInfo = []
-	data.formData = {}
 	//由于axios是异步的，需要分情况处理
 	let config1 = new props.api.Query()
 	config1.params.service = props.serviceName
 	config1.params.action = "getFieldInfo"
+
 	let config2 = new props.api.Query()
 	config2.params.service = props.serviceName
 	config2.params.action = "get"
 	config2.params.filters = {"pk":props.pk}
-	if (props.pk && !props.fieldInfo){
-		axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
-			data.fieldInfo = res1.data.fields
-			data.formData = res2.data.data
-		}))
-	}else if (props.pk && props.fieldInfo){
-		axiosSend(config2).then((res:any)=>{
-			data.formData = res.data.data
+
+	// 如果没有传入pk，那就是add，会处理默认值
+	if(!props.pk){
+		if(!props.fieldInfo){
+			axiosSend(config1).then((res:any)=>{
+				data.fieldInfo = res.data.fields
+				if (data.fieldInfo){
+					for (let f of data.fieldInfo){
+						data.formData[f.name] = f.default
+					}
+				}
+				setDefData()
+			})
+		}else{
 			data.fieldInfo = props.fieldInfo
-		})
-	}else if(!props.pk && !props.fieldInfo){
-		axiosSend(config1).then((res:any)=>{
-			data.fieldInfo = res.data.fields
-			for (let f of data.fieldInfo){
-				data.formData[f.name] = f.default
-			}
 			setDefData()
-		})
-	}else if (!props.pk && props.fieldInfo){
-		data.fieldInfo = props.fieldInfo
-		for (let f of data.fieldInfo){
-				data.formData[f.name] = f.default
-			}
-		setDefData()
+		}
+		
+	// 如果传入了pk，那就是edit，不要默认值
+	}else{
+		if(!props.fieldInfo){
+			axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+				data.fieldInfo = res1.data.fields
+				data.formData = res2.data.data
+			}))
+		}else{
+			axiosSend(config2).then((res:any)=>{
+				data.formData = res.data.data
+				data.fieldInfo = props.fieldInfo
+			})
 		}
 	}
-
+}
 
 const emits = defineEmits<{
 	(event: 'beforeSave', data: any):void,

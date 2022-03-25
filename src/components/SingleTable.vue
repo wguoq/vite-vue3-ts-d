@@ -2,33 +2,31 @@
 // 只有query模式
 // filters为null时不会发起查询数据，这是为了作为上下列表的下表时一开始不会查询
 // fieldInfo为null时才会发起查询fieldInfo，这是为了组合多表字段时从父组件获取
+// 通过rowClick事件把row传出去就行了
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 
-interface Field{
-	name:string 
-	verbose_name:string 
-	type:string 
-	primary_key:boolean 
-	max_length: number 
-	default: any 
-	help_text:string 
+class Field{
+	name:string = ""
+	verbose_name:string = ""
+	type:string = ""
+	primary_key:boolean = false
+	max_length: number = 0
+	default: any = ""
+	help_text:string = ""
 }
 
 interface Props{
 	api:any,
-	action: string,
 	serviceName: string,
 	filters?: {[key: string]: any;}|null,
 	pageSize:number,
 	fieldInfo?: Field[]|null,
 	colwidth?: any,
-	
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	api:"",
-	action: "query",
 	serviceName: "",
 	filters: ()=>{return {}},
 	pageSize:10,
@@ -37,24 +35,12 @@ const props = withDefaults(defineProps<Props>(),{
 
 })
 
-interface Data {
-	fieldInfo:Field[]
-	tableData:any[]
-	pageSize: number
-	currentPage:number
-	total:number
-}
-
-const data = reactive<Data>({
-	fieldInfo: [],
+const data = reactive({
+	fieldInfo: [new Field()],
 	tableData:[],
 	pageSize:10,
 	currentPage:1,
 	total:0
-})
-
-defineExpose({
-	data
 })
 
 const getFieldInfo=()=>{
@@ -73,7 +59,7 @@ const getFieldInfo=()=>{
 const filterData=()=>{
 	let config = new props.api.Query()
 	config.params.service = props.serviceName
-	config.params.action = props.action
+	config.params.action = "filter"
 	config.params.filters = props.filters
 	config.params.pageSize = data.pageSize
 	config.params.pageNumber = data.currentPage
@@ -87,24 +73,19 @@ const filterData=()=>{
 	})
 }
 
-
 function init(){
-	if (props.fieldInfo){
-		data.fieldInfo = props.fieldInfo
-	}else{
-		getFieldInfo()
-	}
-
 	if (props.filters){
 		data.pageSize = props.pageSize
+		getFieldInfo()
 		filterData()
 	}else{
 		data.tableData = []
+		data.fieldInfo =[ new Field()]
 	}
 }
 
 const rowClick = (row:any)=>{
-  emits('rowClick',row)
+  	emits('rowClick',row)
 }
 
 
@@ -118,8 +99,8 @@ const celldblclick =(row:any, column:any, cell:any, event:any)=>{
 }
 const currentPageChange =()=>{
 	filterData()
-
 }
+
 init()
 watch(props,()=>init())
 </script>

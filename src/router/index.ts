@@ -32,12 +32,12 @@ const routes = [
 				component: ()=> import('../pages/flow_inst.vue'),
 
 			},
-			{
-				path: '/test',
-				name: 'test',
-				component: ()=> import('../pages/test.vue'),
+			// {
+			// 	path: '/test',
+			// 	name: 'test',
+			// 	component: ()=> import('../pages/test.vue'),
 			
-			},
+			// },
 		]
 	},
 	

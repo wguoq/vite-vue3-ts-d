@@ -1,26 +1,26 @@
 <script lang="ts" setup>
-import SingleTableF from 'components/SingleTableF.vue';
+import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import TesterApi from 'api/tester.ts'
+// import {SingleTableProps} from 'components/PropsClass.ts'
 
 class TableProps{
-	api:any = ""
-	action: string = ""
-	serviceName: string = ""
-	filters: {[key: string]: any;}|null ={}
+	api:any = null
+	serviceName: string|null = ""
+	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
-	fieldInfo: any = []
+	fieldInfo: any = null
 	colwidth: any = "auto"
 }
 
 class FormProps{
-	action: string = ""
 	api:any = ""
 	serviceName: string = ""
-	pk: any = ""
+	action: string = "add"
+	pk: any = null
 	fieldInfo: any[]|null = null
 	defData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
@@ -29,80 +29,97 @@ class FormProps{
 	noSave: boolean = false
 }
 
-interface Data{
-	testCaseTable:TableProps,
-	tcDataTable:TableProps,
-	tcCheckTable:TableProps,
-	editForm:FormProps,
-	showDialog:boolean,
-	fieldInfo:[],
-}
-
-const data = reactive<Data>({
+const data = reactive({
 	testCaseTable: new TableProps(),
-	tcDataTable:new TableProps(),
+	tcApiTable: new TableProps(),
+	tcApiDataTable:new TableProps(),
 	tcCheckTable:new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
-	fieldInfo:[]
 })
 
-const TestCaseTable = ref()
-let TestCaseTableRow:any
-const TcDataTable = ref()
-let TcDataTableRow:any
+const TcApiTable = ref()
+let TcApiTableRow:any = null
 
+const TestCaseTable = ref()
+let TestCaseTableRow:any = null 
+
+const TcApiDataTable = ref()
+let TcApiDataTableRow:any = null
+
+const TcCheckTable = ref()
+let TcCheckTableRow:any = null
 
 function init(){
 
+	data.tcApiTable = new TableProps()
+	data.tcApiTable.api = TesterApi
+	data.tcApiTable.serviceName = "TcApiService"
+	data.tcApiTable.filters = {}
+	data.tcApiTable.colwidth = 150
+
+	data.testCaseTable = new TableProps()
 	data.testCaseTable.api = TesterApi
 	data.testCaseTable.serviceName = "TestCaseService"
-	data.testCaseTable.action = "filter"
-	data.testCaseTable.pageSize = 5
-	data.testCaseTable.filters = {}
-	data.testCaseTable.fieldInfo = null
+	data.testCaseTable.filters = null
 	data.testCaseTable.colwidth = 150
 
-	data.tcDataTable.api = TesterApi
-	data.tcDataTable.serviceName = "TcDataService"
-	data.tcDataTable.action = "filter"
-	data.tcDataTable.pageSize = 5
-	data.tcDataTable.filters = null
-	data.tcDataTable.fieldInfo = null
-	data.tcDataTable.colwidth = "auto"
+	data.tcApiDataTable = new TableProps()
+	data.tcApiDataTable.api = TesterApi
+	data.tcApiDataTable.filters = null
+	data.tcApiDataTable.colwidth = 150
 
+	data.tcCheckTable = new TableProps()
 	data.tcCheckTable.api = TesterApi
-	data.tcCheckTable.serviceName = "TcCheckPointService"
-	data.tcCheckTable.action = "filter"
-	data.tcCheckTable.pageSize = 5
 	data.tcCheckTable.filters = null
-	data.tcCheckTable.fieldInfo = null
-	data.tcCheckTable.colwidth = "auto"
+
 
 }
 
-const rowTestCaseTable=(row:any)=>{
-	TestCaseTableRow = row
-	data.tcDataTable.filters = {"test_case":row.id}
-}
-
-const rowTcDataTable=(row:any)=>{
-	TcDataTableRow = row
-	data.tcCheckTable.filters = {"tc_data":row.id}
-}
-
-const openTestCaseAdd=()=>{
+const addTcApi=()=>{
+	data.editForm = new FormProps()
 	data.editForm.action = "add"
 	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TestCaseService"
-	data.editForm.fieldInfo = null,
-	data.editForm.defData = null,
-	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.serviceName = "TcApiService"
+	data.editForm.hideLabel = ["id","created_time","modified_time"]
 	data.editForm.disabledLabel = ["version"]
 	data.showDialog = true
 }
 
+const editTcApi=(row:any)=>{
+	data.editForm = new FormProps()
+	data.editForm.action = "edit"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TcApiService"
+	data.editForm.pk = row.id
+	data.editForm.hideLabel = []
+	data.editForm.disabledLabel = ["id","created_time","modified_time","version"]
+	data.showDialog = true
+	
+}
+
+const rowClickTcApiTable=(row:any)=>{
+	TcApiTableRow = row
+	data.testCaseTable.filters = {"tc_action_id": row.id}
+}
+
+const addTestCase=()=>{
+	if (TcApiTableRow == null || TcApiTableRow.id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		data.editForm = new FormProps()
+		data.editForm.action = "add"
+		data.editForm.api = TesterApi
+		data.editForm.serviceName = "TestCaseService"
+		data.editForm.defData = {"tc_action_id": TcApiTableRow.id}
+		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+		data.editForm.disabledLabel = ["version","tc_action_id"]
+		data.showDialog = true
+	}
+}
+
 const editTestCase=(row:any)=>{
+	data.editForm = new FormProps()
 	data.editForm.action = "edit"
 	data.editForm.api = TesterApi
 	data.editForm.serviceName = "TestCaseService"
@@ -112,9 +129,10 @@ const editTestCase=(row:any)=>{
 	data.showDialog = true
 }
 
-const afterSave=()=>{
-	data.showDialog = false
-	init()
+const rowClickTestCaseTable=(row:any)=>{
+	TestCaseTableRow = row
+	data.tcApiDataTable.serviceName = "TcApiDataService"
+	data.tcApiDataTable.filters = {"test_case":row.id}
 }
 
 const runTestCase=(row:any)=>{
@@ -137,13 +155,17 @@ const runTestCase=(row:any)=>{
 	})
 }
 
-const openTcDataAdd=()=>{
-		if (TestCaseTableRow == null || TestCaseTableRow.id == null){
+const addTcApiData=()=>{	
+	
+	if (TestCaseTableRow == null || TestCaseTableRow.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
+		data.editForm = new FormProps()
 		data.editForm.action = "add"
 		data.editForm.api = TesterApi
-		data.editForm.serviceName = "TcDataService"
+		if(TestCaseTableRow.tc_type === "api"){
+			data.editForm.serviceName = "TcApiDataService"
+		}
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
 		data.editForm.defData = {"test_case":TestCaseTableRow.id}
@@ -153,33 +175,64 @@ const openTcDataAdd=()=>{
 	}
 }
 
-const openTcCheckAdd=()=>{
-		if (TcDataTableRow == null || TcDataTableRow.id == null){
+const editTcApiData=(row:any)=>{	
+	data.editForm = new FormProps()
+	data.editForm.action = "edit"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TcApiDataService"
+	data.editForm.pk = row.id
+	data.editForm.fieldInfo = null
+	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.disabledLabel = ["version","test_case"]
+	data.showDialog = true
+}
+
+const rowClickTcApiDataTable=(row: any)=>{
+	TcApiDataTableRow = row
+	data.tcCheckTable.serviceName = "TcCheckPointService"
+	data.tcCheckTable.filters = {"tc_data_id":row.id}
+}
+
+const addTcCheck=()=>{
+	if (TcApiDataTableRow == null || TcApiDataTableRow.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
+		data.editForm = new FormProps()
 		data.editForm.action = "add"
 		data.editForm.api = TesterApi
 		data.editForm.serviceName = "TcCheckPointService"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
-		data.editForm.defData = {"tc_data":TcDataTableRow.id}
+		data.editForm.defData = {"tc_data_id":TcApiDataTableRow.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-		data.editForm.disabledLabel = ["version","tc_data"]
+		data.editForm.disabledLabel = ["version","tc_data_id"]
 		data.showDialog = true
 	}
 }
 
+const editTcChec=(row:any)=>{
+	data.editForm.action = "edit"
+	data.editForm.api = TesterApi
+	data.editForm.serviceName = "TcCheckPointService"
+	data.editForm.pk = row.id
+	data.editForm.fieldInfo = null
+	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.disabledLabel = ["version","tc_data_id"]
+	data.showDialog = true
+}
+const afterSave=()=>{
+	data.showDialog = false
+	init()
+}
 init()
 </script>
 
 <template>
-	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="openTestCaseAdd">新增</el-button>
-	</el-row>
 
 	<el-dialog 
 	v-model="data.showDialog" 
 	:close-on-click-modal="false"
+	destroy-on-close
     center
 	>
 		<EditForm
@@ -199,70 +252,127 @@ init()
 	</el-dialog>
 
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF 
+		<el-button type="primary" plain @click="addTcApi">新增</el-button>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable
+		ref="TcApiTable"
+		:api=data.tcApiTable.api
+		:serviceName=data.tcApiTable.serviceName
+		:filters = data.tcApiTable.filters
+		:pageSize=data.tcApiTable.pageSize
+		:fieldInfo=data.tcApiTable.fieldInfo
+		:colwidth=data.tcApiTable.colwidth
+		@rowClick="rowClickTcApiTable"
+		>
+			<template v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="操作栏" width="80" >
+				<template #default="scope">
+				<el-row>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="editTcApi(scope.row)"
+							>
+							编辑
+						</el-button>
+					</el-col>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
+		</SingleTable>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="addTestCase">新增</el-button>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable
 		ref="TestCaseTable"
 		:api=data.testCaseTable.api
-		:action=data.testCaseTable.action
 		:serviceName=data.testCaseTable.serviceName
 		:filters = data.testCaseTable.filters
 		:pageSize=data.testCaseTable.pageSize
 		:fieldInfo=data.testCaseTable.fieldInfo
 		:colwidth=data.testCaseTable.colwidth
-		@rowClick="rowTestCaseTable"
+		@rowClick="rowClickTestCaseTable"
 		>
 			<template v-slot:SingleTableCol >
-				<el-table-column fixed="right" label="操作栏" width="200" >
-					<template #default="scope">
-					<el-row>
-						<el-col :span="11">
-							<el-button
-								type="primary"
-								size="small"
-								@click="editTestCase(scope.row)"
-								>
-								编辑
-							</el-button>
-						</el-col>
-						<el-col :span="11">
-							<el-button
-								type="primary"
-								size="small"
-								@click="runTestCase(scope.row)"
-								>
-								运行
-							</el-button>
-						</el-col>
-					</el-row>
-					</template>
-				</el-table-column>
+			<el-table-column fixed="right" label="操作栏" width="160" >
+				<template #default="scope">
+				<el-row>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="editTestCase(scope.row)"
+							>
+							编辑
+						</el-button>
+					</el-col>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="runTestCase(scope.row)"
+							>
+							运行
+						</el-button>
+					</el-col>
+				</el-row>
+				</template>
+			</el-table-column>
 			</template>
-		</SingleTableF>
+		</SingleTable>
 	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="openTcDataAdd">新增</el-button>
+		<el-button type="primary" plain @click="addTcApiData">新增</el-button>
 	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF
-		ref="TcDataTable"
-		:api=data.tcDataTable.api
-		:action=data.tcDataTable.action
-		:serviceName=data.tcDataTable.serviceName
-		:filters = data.tcDataTable.filters
-		:pageSize=data.tcDataTable.pageSize
-		:fieldInfo=data.tcDataTable.fieldInfo
-		:colwidth=data.tcDataTable.colwidth
-		@rowClick="rowTcDataTable"
+		<SingleTable
+		ref="TcApiDataTable"
+		:api=data.tcApiDataTable.api
+		:serviceName=data.tcApiDataTable.serviceName
+		:filters = data.tcApiDataTable.filters
+		:pageSize=data.tcApiDataTable.pageSize
+		:fieldInfo=data.tcApiDataTable.fieldInfo
+		:colwidth=data.tcApiDataTable.colwidth
+		@rowClick="rowClickTcApiDataTable"
 		>
-		</SingleTableF>
+			<template v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="操作栏" width="80" >
+				<template #default="scope">
+				<el-row>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="editTcApiData(scope.row)"
+							>
+							编辑
+						</el-button>
+					</el-col>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
+		</SingleTable>
 	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="openTcCheckAdd">新增</el-button>
+		<el-button type="primary" plain @click="addTcCheck">新增</el-button>
 	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF
+		<SingleTable
 		ref="TcCheckTable"
 		:api=data.tcCheckTable.api
-		:action=data.tcCheckTable.action
 		:serviceName=data.tcCheckTable.serviceName
 		:filters = data.tcCheckTable.filters
 		:pageSize=data.tcCheckTable.pageSize
@@ -270,7 +380,24 @@ init()
 		:colwidth=data.tcCheckTable.colwidth
 		@rowClick=""
 		>
-		</SingleTableF>
+			<template v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="操作栏" width="80" >
+				<template #default="scope">
+				<el-row>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="editTcChec(scope.row)"
+							>
+							编辑
+						</el-button>
+					</el-col>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
+		</SingleTable>
 	</el-row>
 </template>
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import SingleTableF from 'components/SingleTableF.vue';
+import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
@@ -212,7 +212,7 @@ init()
 	</el-dialog>
 
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF 
+		<SingleTable
 		ref="FlowTable"
 		:api=data.flowTable.api
 		:action=data.flowTable.action
@@ -249,7 +249,7 @@ init()
 					</template>
 				</el-table-column>
 			</template>
-		</SingleTableF>
+		</SingleTable>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -257,7 +257,7 @@ init()
 	</el-row>
 	
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF 
+		<SingleTable
 		ref="FlowNodeTable"
 		:api=data.flowNodeTable.api
 		:action=data.flowNodeTable.action
@@ -285,7 +285,7 @@ init()
 				</template>
 			</el-table-column>
 			</template>
-		</SingleTableF>
+		</SingleTable>
 	</el-row>
 
 </template>

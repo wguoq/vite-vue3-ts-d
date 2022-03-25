@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import SingleTableF from 'components/SingleTableF.vue';
+import SingleTable from 'components/SingleTable.vue';
 import { ref,reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
@@ -100,7 +100,7 @@ init()
 
 <template>
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF 
+		<SingleTable
 		ref="FlowInstTable"
 		:api=data.flowInstTable.api
 		:action=data.flowInstTable.action
@@ -128,11 +128,11 @@ init()
 					</template>
 				</el-table-column>
 			</template>
-		</SingleTableF>
+		</SingleTable>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
-		<SingleTableF 
+		<SingleTable
 		ref="NodeInstTable"
 		:api=data.nodeInstTable.api
 		:action=data.nodeInstTable.action
@@ -143,7 +143,7 @@ init()
 		:colwidth=data.nodeInstTable.colwidth
 		@rowClick="rowClickNodeInstTableTable"
 		>
-		</SingleTableF>
+		</SingleTable>
 	</el-row>
 
 </template>

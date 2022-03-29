@@ -43,6 +43,18 @@ const data = reactive({
 	total:0
 })
 
+const current = reactive({
+	row:null
+})
+
+const currentChange=(row:any)=>{
+	current.row = row
+}
+
+defineExpose({
+	current
+})
+
 const getFieldInfo=()=>{
 	let config = new props.api.Query()
 	config.params.service = props.serviceName
@@ -73,30 +85,37 @@ const filterData=()=>{
 	})
 }
 
+const emits = defineEmits<{
+	(event: 'beforeInit'):void,
+	(event: 'afterInit'):void,
+	(event: 'rowClick',row:any):void,
+	(event: 'cellDbclick',row:any,column:any):void,
+}>()
+
 function init(){
+	emits('beforeInit')
 	if (props.filters){
 		data.pageSize = props.pageSize
 		getFieldInfo()
 		filterData()
 	}else{
 		data.tableData = []
-		data.fieldInfo =[ new Field()]
+		data.fieldInfo =[]
 	}
+	current.row = null
+	emits('afterInit')
 }
+
 
 const rowClick = (row:any)=>{
+	current.row = row
   	emits('rowClick',row)
 }
-
-
-const emits = defineEmits<{
-	(event: 'rowClick',row:any):void,
-	(event: 'cellDbclick',row:any,column:any):void,
-}>()
 
 const celldblclick =(row:any, column:any, cell:any, event:any)=>{
 	emits('cellDbclick',row,column)
 }
+
 const currentPageChange =()=>{
 	filterData()
 }
@@ -112,7 +131,7 @@ watch(props,()=>init())
 		max-height="300"
 		highlight-current-row
 		border 
-		@current-change=""
+		@current-change="currentChange"
 		@cell-dblclick="celldblclick"
 		@row-click="rowClick"
 	>  

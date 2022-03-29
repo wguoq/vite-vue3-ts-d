@@ -124,14 +124,14 @@ function init(){
 }
 
 const emits = defineEmits<{
-	(event: 'beforeSave', data: any):void,
-	(event: 'afterSave', data: any):void,
+	(event: 'beforeSave', formData: any):void,
+	(event: 'afterSave', props: any):void,
 }>()
 
 const Save =()=>{
 	emits('beforeSave',data.formData)
 	doSvae()
-	emits('afterSave',data.formData)
+	emits('afterSave',props)
 }
 
 defineExpose({

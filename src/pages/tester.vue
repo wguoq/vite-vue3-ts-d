@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
-import { ref,reactive } from 'vue';
+import { ref,reactive,watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import TesterApi from 'api/tester.ts'
@@ -30,51 +30,105 @@ class FormProps{
 }
 
 const data = reactive({
-	testCaseTable: new TableProps(),
-	tcApiTable: new TableProps(),
-	tcApiDataTable:new TableProps(),
-	tcCheckTable:new TableProps(),
+	testCaseTableP: new TableProps(),
+	tcApiTableP: new TableProps(),
+	tcApiDataTableP: new TableProps(),
+	tcCheckTableP:new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
 })
 
 const TcApiTable = ref()
-let TcApiTableRow:any = null
-
 const TestCaseTable = ref()
-let TestCaseTableRow:any = null 
-
 const TcApiDataTable = ref()
-let TcApiDataTableRow:any = null
-
 const TcCheckTable = ref()
-let TcCheckTableRow:any = null
+
+let TcApiTableRow = ref(null)
+let TestCaseTableRow = ref(null)
+let TcApiDataTableRow = ref(null)
+let TcCheckTableRow = ref(null)
 
 function init(){
 
-	data.tcApiTable = new TableProps()
-	data.tcApiTable.api = TesterApi
-	data.tcApiTable.serviceName = "TcApiService"
-	data.tcApiTable.filters = {}
-	data.tcApiTable.colwidth = 150
+	data.tcApiTableP = new TableProps()
+	data.tcApiTableP.api = TesterApi
+	data.tcApiTableP.serviceName = "TcApiService"
+	data.tcApiTableP.filters = {}
+	data.tcApiTableP.colwidth = 150
 
-	data.testCaseTable = new TableProps()
-	data.testCaseTable.api = TesterApi
-	data.testCaseTable.serviceName = "TestCaseService"
-	data.testCaseTable.filters = null
-	data.testCaseTable.colwidth = 150
+	data.testCaseTableP = new TableProps()
+	data.testCaseTableP.api = TesterApi
+	data.testCaseTableP.serviceName = "TestCaseService"
+	data.testCaseTableP.filters = null
+	data.testCaseTableP.colwidth = 150
 
-	data.tcApiDataTable = new TableProps()
-	data.tcApiDataTable.api = TesterApi
-	data.tcApiDataTable.filters = null
-	data.tcApiDataTable.colwidth = 150
+	data.tcApiDataTableP = new TableProps()
+	data.tcApiDataTableP.api = TesterApi
+	data.tcApiDataTableP.serviceName = "TcApiDataService"
+	data.tcApiDataTableP.filters = null
+	data.tcApiDataTableP.colwidth = 150
 
-	data.tcCheckTable = new TableProps()
-	data.tcCheckTable.api = TesterApi
-	data.tcCheckTable.filters = null
-
+	data.tcCheckTableP = new TableProps()
+	data.tcCheckTableP.api = TesterApi
+	data.tcCheckTableP.serviceName = "TcCheckPointService"
+	data.tcCheckTableP.filters = null
+	data.tcApiDataTableP.colwidth = 150
 
 }
+
+const updata=()=>{
+
+	if (typeof(TcApiTable.value) != "undefined" && TcApiTable.value.current.row){
+		TcApiTableRow.value = TcApiTable.value.current.row
+	}else{
+		TcApiTableRow.value = null
+	}
+
+	if (typeof(TestCaseTable.value) != "undefined" && TestCaseTable.value.current.row){
+		TestCaseTableRow.value = TestCaseTable.value.current.row
+	}else{
+		TestCaseTableRow.value = null
+	}
+
+	if (typeof(TcApiDataTable.value) != "undefined" && TcApiDataTable.value.current.row){
+		TcApiDataTableRow.value = TcApiDataTable.value.current.row
+	}else{
+		TcApiDataTableRow.value = null
+	}
+
+	if (typeof(TcCheckTable.value) != "undefined" && TcCheckTable.value.current.row){
+		TcCheckTableRow.value = TcCheckTable.value.current.row
+	}else{
+		TcCheckTableRow.value = null
+	}
+}
+
+watch([TcApiTableRow,TestCaseTableRow,TcApiDataTableRow],(new_,old_) => {
+	if(new_[0] != old_[0]){
+		if (typeof(TcApiTable.value) != "undefined" && TcApiTable.value.current.row){
+			data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value.current.row.id}
+		}else{
+			data.testCaseTableP.filters = null
+		}
+	}
+	
+	if(new_[1] != old_[1]){
+		if (typeof(TestCaseTable.value) != "undefined" && TestCaseTable.value.current.row){
+			data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value.current.row.id}
+		}else{
+			data.tcApiDataTableP.filters = null
+		}
+	}
+
+	if(new_[2] != old_[2]){
+		if (typeof(TcApiDataTable.value) != "undefined" && TcApiDataTable.value.current.row){
+			data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value.current.row.id}
+		}else{
+			data.tcCheckTableP.filters = null
+		}
+	}
+
+})
 
 const addTcApi=()=>{
 	data.editForm = new FormProps()
@@ -98,20 +152,15 @@ const editTcApi=(row:any)=>{
 	
 }
 
-const rowClickTcApiTable=(row:any)=>{
-	TcApiTableRow = row
-	data.testCaseTable.filters = {"tc_action_id": row.id}
-}
-
 const addTestCase=()=>{
-	if (TcApiTableRow == null || TcApiTableRow.id == null){
+	if (TcApiTable.value.current.row == null || TcApiTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
 		data.editForm.action = "add"
 		data.editForm.api = TesterApi
 		data.editForm.serviceName = "TestCaseService"
-		data.editForm.defData = {"tc_action_id": TcApiTableRow.id}
+		data.editForm.defData = {"tc_action_id": TcApiTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
 		data.editForm.disabledLabel = ["version","tc_action_id"]
 		data.showDialog = true
@@ -129,12 +178,6 @@ const editTestCase=(row:any)=>{
 	data.showDialog = true
 }
 
-const rowClickTestCaseTable=(row:any)=>{
-	TestCaseTableRow = row
-	data.tcApiDataTable.serviceName = "TcApiDataService"
-	data.tcApiDataTable.filters = {"test_case":row.id}
-}
-
 const runTestCase=(row:any)=>{
 	let config = new TesterApi.Commit()
 	config.data.service = "TesterService"
@@ -145,30 +188,23 @@ const runTestCase=(row:any)=>{
 		load.close()
 		console.log(res);
 		if(res){
-			if (res.data.test_case_result == 'fail'){
-				ElMessage.warning(JSON.stringify(res.data))
-			}else{
-				ElMessage.success(JSON.stringify(res.data))
-			}
+			ElMessage.success(JSON.stringify(res.data))
 		}
 		
 	})
 }
 
 const addTcApiData=()=>{	
-	
-	if (TestCaseTableRow == null || TestCaseTableRow.id == null){
+	if (TestCaseTable.value.current.row == null || TestCaseTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
 		data.editForm.action = "add"
 		data.editForm.api = TesterApi
-		if(TestCaseTableRow.tc_type === "api"){
-			data.editForm.serviceName = "TcApiDataService"
-		}
+		data.editForm.serviceName = "TcApiDataService"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
-		data.editForm.defData = {"test_case":TestCaseTableRow.id}
+		data.editForm.defData = {"test_case":TestCaseTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
 		data.editForm.disabledLabel = ["version","test_case"]
 		data.showDialog = true
@@ -187,14 +223,8 @@ const editTcApiData=(row:any)=>{
 	data.showDialog = true
 }
 
-const rowClickTcApiDataTable=(row: any)=>{
-	TcApiDataTableRow = row
-	data.tcCheckTable.serviceName = "TcCheckPointService"
-	data.tcCheckTable.filters = {"tc_data_id":row.id}
-}
-
 const addTcCheck=()=>{
-	if (TcApiDataTableRow == null || TcApiDataTableRow.id == null){
+	if (TcApiDataTable.value.current.row == null || TcApiDataTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
@@ -203,7 +233,7 @@ const addTcCheck=()=>{
 		data.editForm.serviceName = "TcCheckPointService"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
-		data.editForm.defData = {"tc_data_id":TcApiDataTableRow.id}
+		data.editForm.defData = {"tc_data_id":TcApiDataTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
 		data.editForm.disabledLabel = ["version","tc_data_id"]
 		data.showDialog = true
@@ -220,15 +250,27 @@ const editTcChec=(row:any)=>{
 	data.editForm.disabledLabel = ["version","tc_data_id"]
 	data.showDialog = true
 }
-const afterSave=()=>{
+const afterSave=(f:any)=>{
 	data.showDialog = false
-	init()
+	console.log(f.serviceName);
+	if(f.serviceName == 'TcApiService'){
+		data.tcApiTableP.filters = {}
+	}
+	if(f.serviceName == 'TestCaseService'){
+		data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value.current.row.id}
+	}
+	if(f.serviceName == 'TcApiDataService'){
+		data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value.current.row.id}
+	}
+	if(f.serviceName == 'TcCheckPointService'){
+		data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value.current.row.id}
+	}
 }
+
 init()
 </script>
 
 <template>
-
 	<el-dialog 
 	v-model="data.showDialog" 
 	:close-on-click-modal="false"
@@ -251,6 +293,10 @@ init()
 		></EditForm>
 	</el-dialog>
 
+	<el-row justify="center" style="margin: 5px;">
+		<span>ApiTable</span>
+	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addTcApi">新增</el-button>
 	</el-row>
@@ -258,13 +304,13 @@ init()
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
 		ref="TcApiTable"
-		:api=data.tcApiTable.api
-		:serviceName=data.tcApiTable.serviceName
-		:filters = data.tcApiTable.filters
-		:pageSize=data.tcApiTable.pageSize
-		:fieldInfo=data.tcApiTable.fieldInfo
-		:colwidth=data.tcApiTable.colwidth
-		@rowClick="rowClickTcApiTable"
+		:api=data.tcApiTableP.api
+		:serviceName=data.tcApiTableP.serviceName
+		:filters = data.tcApiTableP.filters
+		:pageSize=data.tcApiTableP.pageSize
+		:fieldInfo=data.tcApiTableP.fieldInfo
+		:colwidth=data.tcApiTableP.colwidth
+		@rowClick="updata"
 		>
 			<template v-slot:SingleTableCol >
 			<el-table-column fixed="right" label="操作栏" width="80" >
@@ -286,6 +332,10 @@ init()
 		</SingleTable>
 	</el-row>
 
+	<el-row justify="center" style="margin: 5px;">
+		<span>TestCaseTable</span>
+	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addTestCase">新增</el-button>
 	</el-row>
@@ -293,13 +343,14 @@ init()
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
 		ref="TestCaseTable"
-		:api=data.testCaseTable.api
-		:serviceName=data.testCaseTable.serviceName
-		:filters = data.testCaseTable.filters
-		:pageSize=data.testCaseTable.pageSize
-		:fieldInfo=data.testCaseTable.fieldInfo
-		:colwidth=data.testCaseTable.colwidth
-		@rowClick="rowClickTestCaseTable"
+		:api=data.testCaseTableP.api
+		:serviceName=data.testCaseTableP.serviceName
+		:filters = data.testCaseTableP.filters
+		:pageSize=data.testCaseTableP.pageSize
+		:fieldInfo=data.testCaseTableP.fieldInfo
+		:colwidth=data.testCaseTableP.colwidth
+		@rowClick="updata"
+		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
 			<el-table-column fixed="right" label="操作栏" width="160" >
@@ -330,6 +381,10 @@ init()
 		</SingleTable>
 	</el-row>
 
+	<el-row justify="center" style="margin: 5px;">
+		<span>ApiDataTable</span>
+	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addTcApiData">新增</el-button>
 	</el-row>
@@ -337,13 +392,14 @@ init()
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
 		ref="TcApiDataTable"
-		:api=data.tcApiDataTable.api
-		:serviceName=data.tcApiDataTable.serviceName
-		:filters = data.tcApiDataTable.filters
-		:pageSize=data.tcApiDataTable.pageSize
-		:fieldInfo=data.tcApiDataTable.fieldInfo
-		:colwidth=data.tcApiDataTable.colwidth
-		@rowClick="rowClickTcApiDataTable"
+		:api=data.tcApiDataTableP.api
+		:serviceName=data.tcApiDataTableP.serviceName
+		:filters = data.tcApiDataTableP.filters
+		:pageSize=data.tcApiDataTableP.pageSize
+		:fieldInfo=data.tcApiDataTableP.fieldInfo
+		:colwidth=data.tcApiDataTableP.colwidth
+		@rowClick="updata"
+		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
 			<el-table-column fixed="right" label="操作栏" width="80" >
@@ -365,6 +421,10 @@ init()
 		</SingleTable>
 	</el-row>
 
+	<el-row justify="center" style="margin: 5px;">
+		<span>CheckPointTable</span>
+	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addTcCheck">新增</el-button>
 	</el-row>
@@ -372,12 +432,12 @@ init()
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
 		ref="TcCheckTable"
-		:api=data.tcCheckTable.api
-		:serviceName=data.tcCheckTable.serviceName
-		:filters = data.tcCheckTable.filters
-		:pageSize=data.tcCheckTable.pageSize
-		:fieldInfo=data.tcCheckTable.fieldInfo
-		:colwidth=data.tcCheckTable.colwidth
+		:api=data.tcCheckTableP.api
+		:serviceName=data.tcCheckTableP.serviceName
+		:filters = data.tcCheckTableP.filters
+		:pageSize=data.tcCheckTableP.pageSize
+		:fieldInfo=data.tcCheckTableP.fieldInfo
+		:colwidth=data.tcCheckTableP.colwidth
 		@rowClick=""
 		>
 			<template v-slot:SingleTableCol >
@@ -404,5 +464,4 @@ init()
 <style scoped>
 
 </style>
-
 

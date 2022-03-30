@@ -9,7 +9,7 @@ import TesterApi from 'api/tester.ts'
 
 class TableProps{
 	api:any = null
-	serviceName: string|null = ""
+	serviceName: string = ""
 	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
 	fieldInfo: any = null
@@ -77,7 +77,7 @@ function init(){
 }
 
 const updata=()=>{
-
+	//当数据发生改变后，重新获取每个列表的当前选中行
 	if (typeof(TcApiTable.value) != "undefined" && TcApiTable.value.current.row){
 		TcApiTableRow.value = TcApiTable.value.current.row
 	}else{
@@ -102,7 +102,7 @@ const updata=()=>{
 		TcCheckTableRow.value = null
 	}
 }
-
+//监听每个列表选中行的变化来更新关联数据
 watch([TcApiTableRow,TestCaseTableRow,TcApiDataTableRow],(new_,old_) => {
 	if(new_[0] != old_[0]){
 		if (typeof(TcApiTable.value) != "undefined" && TcApiTable.value.current.row){
@@ -129,6 +129,17 @@ watch([TcApiTableRow,TestCaseTableRow,TcApiDataTableRow],(new_,old_) => {
 	}
 
 })
+
+function editRow(row: any,api: any,serviceName: string){
+	data.editForm = new FormProps()
+	data.editForm.action = "edit"
+	data.editForm.api = api
+	data.editForm.serviceName = serviceName
+	data.editForm.pk = row.id
+	data.editForm.hideLabel = []
+	data.editForm.disabledLabel = ["id","created_time","modified_time","version"]
+	data.showDialog = true
+}
 
 const addTcApi=()=>{
 	data.editForm = new FormProps()
@@ -250,21 +261,37 @@ const editTcChec=(row:any)=>{
 	data.editForm.disabledLabel = ["version","tc_data_id"]
 	data.showDialog = true
 }
-const afterSave=(f:any)=>{
-	data.showDialog = false
-	console.log(f.serviceName);
-	if(f.serviceName == 'TcApiService'){
+
+function reload(serviceName:string){
+	if(serviceName == 'TcApiService'){
 		data.tcApiTableP.filters = {}
 	}
-	if(f.serviceName == 'TestCaseService'){
+	else if(serviceName == 'TestCaseService'){
 		data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value.current.row.id}
 	}
-	if(f.serviceName == 'TcApiDataService'){
+	else if(serviceName == 'TcApiDataService'){
 		data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value.current.row.id}
 	}
-	if(f.serviceName == 'TcCheckPointService'){
+	else if(serviceName == 'TcCheckPointService'){
 		data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value.current.row.id}
 	}
+
+}
+const afterSave=(f:any)=>{
+	data.showDialog = false
+	reload(f.serviceName)
+}
+
+function delRow(row: any,api: any,serviceName: string){
+	let config = new api.Commit()
+	config.data.service = serviceName
+	config.data.action = 'del'
+	config.data.data = {'pk': row.id}
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		reload(serviceName)
+	})
 }
 
 init()
@@ -311,18 +338,28 @@ init()
 		:fieldInfo=data.tcApiTableP.fieldInfo
 		:colwidth=data.tcApiTableP.colwidth
 		@rowClick="updata"
+		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="80" >
+			<el-table-column fixed="right" label="操作栏" width="140" >
 				<template #default="scope">
 				<el-row>
 					<el-col :span="11">
 						<el-button
 							type="primary"
 							size="small"
-							@click="editTcApi(scope.row)"
+							@click="editRow(scope.row,data.tcApiTableP.api,data.tcApiTableP.serviceName)"
 							>
 							编辑
+						</el-button>
+					</el-col>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="delRow(scope.row,data.tcApiTableP.api,data.tcApiTableP.serviceName)"
+							>
+							删除
 						</el-button>
 					</el-col>
 				</el-row>
@@ -353,19 +390,28 @@ init()
 		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="160" >
+			<el-table-column fixed="right" label="操作栏" width="210" >
 				<template #default="scope">
 				<el-row>
-					<el-col :span="11">
+					<el-col :span="8">
 						<el-button
 							type="primary"
 							size="small"
-							@click="editTestCase(scope.row)"
+							@click="editRow(scope.row, data.testCaseTableP.api,data.testCaseTableP.serviceName)"
 							>
 							编辑
 						</el-button>
 					</el-col>
-					<el-col :span="11">
+					<el-col :span="8">
+						<el-button
+							type="primary"
+							size="small"
+							@click="delRow(scope.row,data.testCaseTableP.api,data.testCaseTableP.serviceName)"
+							>
+							删除
+						</el-button>
+					</el-col>
+					<el-col :span="8">
 						<el-button
 							type="primary"
 							size="small"
@@ -402,16 +448,25 @@ init()
 		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="80" >
+			<el-table-column fixed="right" label="操作栏" width="140" >
 				<template #default="scope">
 				<el-row>
 					<el-col :span="11">
 						<el-button
 							type="primary"
 							size="small"
-							@click="editTcApiData(scope.row)"
+							@click="editRow(scope.row,data.tcApiDataTableP.api,data.tcApiDataTableP.serviceName)"
 							>
 							编辑
+						</el-button>
+					</el-col>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="delRow(scope.row,data.tcApiDataTableP.api,data.tcApiDataTableP.serviceName)"
+							>
+							删除
 						</el-button>
 					</el-col>
 				</el-row>
@@ -438,19 +493,29 @@ init()
 		:pageSize=data.tcCheckTableP.pageSize
 		:fieldInfo=data.tcCheckTableP.fieldInfo
 		:colwidth=data.tcCheckTableP.colwidth
-		@rowClick=""
+		@rowClick="updata"
+		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="80" >
+			<el-table-column fixed="right" label="操作栏" width="140" >
 				<template #default="scope">
 				<el-row>
 					<el-col :span="11">
 						<el-button
 							type="primary"
 							size="small"
-							@click="editTcChec(scope.row)"
+							@click="editRow(scope.row,data.tcCheckTableP.api,data.tcCheckTableP.serviceName)"
 							>
 							编辑
+						</el-button>
+					</el-col>
+					<el-col :span="11">
+						<el-button
+							type="primary"
+							size="small"
+							@click="delRow(scope.row,data.tcCheckTableP.api,data.tcCheckTableP.serviceName)"
+							>
+							删除
 						</el-button>
 					</el-col>
 				</el-row>

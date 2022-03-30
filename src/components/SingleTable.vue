@@ -43,7 +43,9 @@ const data = reactive({
 	currentPage:1,
 	total:0,
 	pkName:"",
+	currentRow:"",
 	showDialog:false,
+	showTip:false,
 	editPk: null
 })
 
@@ -58,19 +60,6 @@ const currentChange=(row:any)=>{
 defineExpose({
 	current
 })
-
-const getFieldInfo=()=>{
-	let config = new props.api.Query()
-	config.params.service = props.serviceName
-	config.params.action = "getFieldInfo"
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		load.close()
-		if(res){
-			data.fieldInfo = res.data.fields
-		}
-	})
-}
 
 const filterData=()=>{
 	let config = new props.api.Query()
@@ -89,6 +78,15 @@ const filterData=()=>{
 	})
 }
 
+function getPkName(){
+	for(let f of data.fieldInfo){
+		if (f.primary_key){
+			data.pkName = f.name
+			break
+		}
+	}
+}
+
 const emits = defineEmits<{
 	(event: 'beforeInit'):void,
 	(event: 'afterInit'):void,
@@ -98,15 +96,38 @@ const emits = defineEmits<{
 
 function init(){
 	emits('beforeInit')
-	if (props.filters){
-		data.pageSize = props.pageSize
-		getFieldInfo()
-		filterData()
-	}else{
-		data.tableData = []
-		data.fieldInfo =[]
-	}
 	current.row = null
+	//处理FieldInfo,null就去查询
+	if(!props.fieldInfo){
+		let config = new props.api.Query()
+		config.params.service = props.serviceName
+		config.params.action = "getFieldInfo"
+		let load = loading()
+		axiosSend(config).then((res:any)=>{
+			load.close()
+			if(res){
+				data.fieldInfo = res.data.fields
+				getPkName()
+			}else{
+				data.fieldInfo = []
+			}
+			// 处理filters，不为null就查询
+			if (props.filters){
+				filterData()
+			}else{
+				data.tableData = []
+			}
+		})
+	}else{
+		data.fieldInfo = props.fieldInfo
+		getPkName()
+		if (props.filters){
+				filterData()
+			}else{
+				data.tableData = []
+			}
+	}
+	
 	emits('afterInit')
 }
 
@@ -124,24 +145,28 @@ const currentPageChange =()=>{
 }
 
 function editRow(row:any){
-	data.editPk = row.id
+	data.editPk = row[data.pkName]
 	data.showDialog = true
 }
 
 function afterSave(){
 	data.showDialog = false
-	init()
+	filterData()
 }
-
-function delRow(row: any){
+function delTip(row:any){
+	data.showTip = true
+	data.currentRow = row
+}
+function delCurrentRow(){
 	let config = new props.api.Commit()
 	config.data.service = props.serviceName
 	config.data.action = 'del'
-	config.data.data = {'pk': row.id}
+	config.data.data = {'pk': data.currentRow[data.pkName]}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
-		init()
+		data.showTip = false
+		filterData()
 	})
 }
 
@@ -151,6 +176,24 @@ const disabledLabel = ["id","code","created_time","modified_time","version","ver
 </script>
 
 <template >
+	<el-dialog
+		v-model="data.showTip"
+		width="30%"
+		:close-on-click-modal="false"
+		destroy-on-close
+		center
+	>
+		<span>删除数据?</span>
+		<template #footer>
+		<span class="dialog-footer">
+			<el-button @click="data.showTip = false">Cancel</el-button>
+			<el-button type="primary" @click="delCurrentRow"
+			>Confirm</el-button
+			>
+		</span>
+		</template>
+	</el-dialog>
+
 	<el-dialog 
 	v-model="data.showDialog" 
 	:close-on-click-modal="false"
@@ -210,7 +253,7 @@ const disabledLabel = ["id","code","created_time","modified_time","version","ver
 					<el-button
 						type="primary"
 						size="small"
-						@click="delRow(scope.row)"
+						@click="delTip(scope.row)"
 						>
 						删除
 					</el-button>

@@ -5,6 +5,7 @@
 // 通过rowClick事件把row传出去就行了
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
+import EditForm from 'components/EditForm.vue';
 
 class Field{
 	name:string = ""
@@ -40,7 +41,10 @@ const data = reactive({
 	tableData:[],
 	pageSize:10,
 	currentPage:1,
-	total:0
+	total:0,
+	pkName:"",
+	showDialog:false,
+	editPk: null
 })
 
 const current = reactive({
@@ -106,7 +110,6 @@ function init(){
 	emits('afterInit')
 }
 
-
 const rowClick = (row:any)=>{
 	current.row = row
   	emits('rowClick',row)
@@ -120,11 +123,51 @@ const currentPageChange =()=>{
 	filterData()
 }
 
+function editRow(row:any){
+	data.editPk = row.id
+	data.showDialog = true
+}
+
+function afterSave(){
+	data.showDialog = false
+	init()
+}
+
+function delRow(row: any){
+	let config = new props.api.Commit()
+	config.data.service = props.serviceName
+	config.data.action = 'del'
+	config.data.data = {'pk': row.id}
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		init()
+	})
+}
+
 init()
 watch(props,()=>init())
+const disabledLabel = ["id","code","created_time","modified_time","version","ver_status"]
 </script>
 
 <template >
+	<el-dialog 
+	v-model="data.showDialog" 
+	:close-on-click-modal="false"
+	destroy-on-close
+    center
+	>
+		<EditForm
+		ref="DialogForm" 
+		action = "edit"
+		:api = props.api
+		:serviceName = props.serviceName
+		:pk = data.editPk
+		:disabledLabel= disabledLabel
+		@afterSave = "afterSave"
+		></EditForm>
+	</el-dialog>
+
 	<el-table
 		:data="data.tableData"
 		style="width: 100%"
@@ -137,7 +180,6 @@ watch(props,()=>init())
 	>  
 		<el-table-column v-if="data.tableData.length > 0" type="index" width="50" />
 		<template v-for="field in data.fieldInfo">
-			
 			<el-table-column 
 			:property="field.name" 
 			:label="field.verbose_name" 
@@ -152,7 +194,31 @@ watch(props,()=>init())
 			</template>
 			</el-table-column>
 		</template>
-		<slot v-if="data.tableData.length > 0" name="SingleTableCol" ></slot>
+		<el-table-column v-if="data.tableData.length > 0" fixed="right" label="操作" width="140" >
+			<template #default="scope">
+			<el-row>
+				<el-col :span="11">
+					<el-button
+						type="primary"
+						size="small"
+						@click="editRow(scope.row)"
+						>
+						编辑
+					</el-button>
+				</el-col>
+				<el-col :span="11">
+					<el-button
+						type="primary"
+						size="small"
+						@click="delRow(scope.row)"
+						>
+						删除
+					</el-button>
+				</el-col>
+			</el-row>
+			</template>
+			</el-table-column>
+			<slot v-if="data.tableData.length > 0" name="SingleTableCol" ></slot>
 	</el-table>
 	
 	<el-row style="text-align: left; margin-top: 5px;">

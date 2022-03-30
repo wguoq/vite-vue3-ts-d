@@ -2,7 +2,7 @@
 import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive,watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { Callback, ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import TesterApi from 'api/tester.ts'
 // import {SingleTableProps} from 'components/PropsClass.ts'
@@ -151,18 +151,6 @@ const addTcApi=()=>{
 	data.showDialog = true
 }
 
-const editTcApi=(row:any)=>{
-	data.editForm = new FormProps()
-	data.editForm.action = "edit"
-	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TcApiService"
-	data.editForm.pk = row.id
-	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["id","created_time","modified_time","version"]
-	data.showDialog = true
-	
-}
-
 const addTestCase=()=>{
 	if (TcApiTable.value.current.row == null || TcApiTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
@@ -176,17 +164,6 @@ const addTestCase=()=>{
 		data.editForm.disabledLabel = ["version","tc_action_id"]
 		data.showDialog = true
 	}
-}
-
-const editTestCase=(row:any)=>{
-	data.editForm = new FormProps()
-	data.editForm.action = "edit"
-	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TestCaseService"
-	data.editForm.pk = row.id
-	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["id","code","created_time","modified_time","version"]
-	data.showDialog = true
 }
 
 const runTestCase=(row:any)=>{
@@ -222,18 +199,6 @@ const addTcApiData=()=>{
 	}
 }
 
-const editTcApiData=(row:any)=>{	
-	data.editForm = new FormProps()
-	data.editForm.action = "edit"
-	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TcApiDataService"
-	data.editForm.pk = row.id
-	data.editForm.fieldInfo = null
-	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-	data.editForm.disabledLabel = ["version","test_case"]
-	data.showDialog = true
-}
-
 const addTcCheck=()=>{
 	if (TcApiDataTable.value.current.row == null || TcApiDataTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
@@ -251,17 +216,6 @@ const addTcCheck=()=>{
 	}
 }
 
-const editTcChec=(row:any)=>{
-	data.editForm.action = "edit"
-	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TcCheckPointService"
-	data.editForm.pk = row.id
-	data.editForm.fieldInfo = null
-	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-	data.editForm.disabledLabel = ["version","tc_data_id"]
-	data.showDialog = true
-}
-
 function reload(serviceName:string){
 	if(serviceName == 'TcApiService'){
 		data.tcApiTableP.filters = {}
@@ -277,6 +231,7 @@ function reload(serviceName:string){
 	}
 
 }
+
 const afterSave=(f:any)=>{
 	data.showDialog = false
 	reload(f.serviceName)
@@ -340,32 +295,6 @@ init()
 		@rowClick="updata"
 		@afterInit="updata"
 		>
-			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="140" >
-				<template #default="scope">
-				<el-row>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="editRow(scope.row,data.tcApiTableP.api,data.tcApiTableP.serviceName)"
-							>
-							编辑
-						</el-button>
-					</el-col>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="delRow(scope.row,data.tcApiTableP.api,data.tcApiTableP.serviceName)"
-							>
-							删除
-						</el-button>
-					</el-col>
-				</el-row>
-				</template>
-			</el-table-column>
-			</template>
 		</SingleTable>
 	</el-row>
 
@@ -390,36 +319,16 @@ init()
 		@afterInit="updata"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="210" >
+			<el-table-column fixed="right" label="功能" width="70" >
 				<template #default="scope">
 				<el-row>
-					<el-col :span="8">
-						<el-button
-							type="primary"
-							size="small"
-							@click="editRow(scope.row, data.testCaseTableP.api,data.testCaseTableP.serviceName)"
-							>
-							编辑
-						</el-button>
-					</el-col>
-					<el-col :span="8">
-						<el-button
-							type="primary"
-							size="small"
-							@click="delRow(scope.row,data.testCaseTableP.api,data.testCaseTableP.serviceName)"
-							>
-							删除
-						</el-button>
-					</el-col>
-					<el-col :span="8">
-						<el-button
-							type="primary"
-							size="small"
-							@click="runTestCase(scope.row)"
-							>
-							运行
-						</el-button>
-					</el-col>
+					<el-button
+						type="primary"
+						size="small"
+						@click="runTestCase(scope.row)"
+						>
+						执行
+					</el-button>
 				</el-row>
 				</template>
 			</el-table-column>
@@ -447,32 +356,6 @@ init()
 		@rowClick="updata"
 		@afterInit="updata"
 		>
-			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="140" >
-				<template #default="scope">
-				<el-row>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="editRow(scope.row,data.tcApiDataTableP.api,data.tcApiDataTableP.serviceName)"
-							>
-							编辑
-						</el-button>
-					</el-col>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="delRow(scope.row,data.tcApiDataTableP.api,data.tcApiDataTableP.serviceName)"
-							>
-							删除
-						</el-button>
-					</el-col>
-				</el-row>
-				</template>
-			</el-table-column>
-			</template>
 		</SingleTable>
 	</el-row>
 
@@ -496,32 +379,6 @@ init()
 		@rowClick="updata"
 		@afterInit="updata"
 		>
-			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="140" >
-				<template #default="scope">
-				<el-row>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="editRow(scope.row,data.tcCheckTableP.api,data.tcCheckTableP.serviceName)"
-							>
-							编辑
-						</el-button>
-					</el-col>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="delRow(scope.row,data.tcCheckTableP.api,data.tcCheckTableP.serviceName)"
-							>
-							删除
-						</el-button>
-					</el-col>
-				</el-row>
-				</template>
-			</el-table-column>
-			</template>
 		</SingleTable>
 	</el-row>
 </template>

@@ -19,7 +19,7 @@ class TableProps{
 class FormProps{
 	api:any = ""
 	repo: string = ""
-	action: string = "add"
+	action: string = "save"
 	pk: any = null
 	fieldInfo: any[]|null = null
 	defData: {[key: string]: any;}|null = null

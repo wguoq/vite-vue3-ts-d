@@ -1,16 +1,15 @@
 <script lang="ts" setup>
 import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
-import { ref,reactive } from 'vue';
+import { ref,reactive,watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import FlowApi from 'api/flow.ts'
-import axios from 'axios';
+// import {SingleTableProps} from 'components/PropsClass.ts'
 
 class TableProps{
-	api:any = ""
-	action: string = ""
-	serviceName: string = ""
+	api:any = null
+	repo: string = ""
 	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
 	fieldInfo: any = null
@@ -18,188 +17,209 @@ class TableProps{
 }
 
 class FormProps{
-	action: string = ""
 	api:any = ""
-	serviceName: string = ""
+	repo: string = ""
+	action: string = "save"
 	pk: any = null
 	fieldInfo: any[]|null = null
 	defData: {[key: string]: any;}|null = null
 	disabledLabel: string[] = []
 	hideLabel: string[] = []
 	readOnly: boolean = false
-	noSave: boolean =false
+	noSave: boolean = false
 }
 
-interface Data{
-	flowTable:TableProps,
-	flowNodeTable:TableProps,
-	editForm:FormProps,
-	showDialog:boolean,
-	fieldInfo:[],
-}
-
-const data = reactive<Data>({
-	flowTable: new TableProps(),
-	flowNodeTable: new TableProps(),
+const data = reactive({
+	flowTableP: new TableProps(),
+	nodeTableP: new TableProps(),
+	orderTableP: new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
-	fieldInfo:[]
-
 })
 
-const DialogForm = ref()
 const FlowTable = ref()
-let FlowTableRow:any
-const FlowNodeTable = ref()
-let FlowNodeTableRow:any
+const OrderTable = ref()
+const NodeTable = ref()
+
+
+let FlowTableRow = ref(null)
+let OrderTableRow = ref(null)
+let NodeTableRow = ref(null)
+
 
 function init(){
 
-	data.flowTable.api = FlowApi
-	data.flowTable.serviceName = "FlowDesignService"
-	data.flowTable.action = "filter"
-	data.flowTable.pageSize = 5
-	data.flowTable.filters = {}
-	data.flowTable.fieldInfo = null
-	data.flowTable.colwidth = 150
-	
-	data.flowNodeTable.api = FlowApi
-	data.flowNodeTable.serviceName = "FlowNodeService"
-	data.flowNodeTable.action = "filter"
-	data.flowNodeTable.pageSize = 5
-	data.flowNodeTable.filters = null
-	data.flowNodeTable.fieldInfo = []
-	data.flowNodeTable.colwidth = 150
+	data.flowTableP = new TableProps()
+	data.flowTableP.api = FlowApi
+	data.flowTableP.repo = "FlowDesign"
+	data.flowTableP.filters = {}
+	data.flowTableP.colwidth = 150
 
-	let config1 = new FlowApi.Query()
-	config1.params.service = "FlowNodeService"
-	config1.params.action = "getFieldInfo"
-	let config2 = new FlowApi.Query()
-	config2.params.service = "NodeDesignService"
-	config2.params.action = "getFieldInfo"
-	
-	let load = loading()
-	axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
-		load.close()
-		let aaa = res1.data.fields
-		let bbb = res2.data.fields
-		let ccc:any[] = []
-		let arr = ["id","code","created_time","modified_time"]
-		for (let a of aaa){
-			if (arr.indexOf(a.name)>-1){
-				continue
-			}else{
-				ccc.push(a)
-			}
+	data.orderTableP = new TableProps()
+	data.orderTableP.api = FlowApi
+	data.orderTableP.repo = "FlowNodeOder"
+	data.orderTableP.filters = null
+
+
+	data.nodeTableP = new TableProps()
+	data.nodeTableP.api = FlowApi
+	data.nodeTableP.repo = "NodeDesign"
+	data.nodeTableP.filters = {}
+	data.nodeTableP.colwidth = 150
+
+
+
+}
+
+const updata=()=>{
+	//当数据发生改变后，重新获取每个列表的当前选中行
+	if (typeof(FlowTable.value) != "undefined" && FlowTable.value.current.row){
+		FlowTableRow.value = FlowTable.value.current.row
+	}else{
+		FlowTableRow.value = null
+	}
+
+	if (typeof(OrderTable.value) != "undefined" && OrderTable.value.current.row){
+		OrderTableRow.value = OrderTable.value.current.row
+	}else{
+		OrderTableRow.value = null
+	}
+
+	if (typeof(NodeTable.value) != "undefined" && NodeTable.value.current.row){
+		NodeTableRow.value = NodeTable.value.current.row
+	}else{
+		NodeTableRow.value = null
+	}
+}
+//监听每个列表选中行的变化来更新关联数据
+watch([FlowTableRow,OrderTableRow,NodeTableRow],(new_,old_) => {
+	if(new_[0] != old_[0]){
+		if (typeof(FlowTable.value) != "undefined" && FlowTable.value.current.row){
+			data.orderTableP.filters = {"flow_design_id": FlowTable.value.current.row.id}
+		}else{
+			data.orderTableP.filters = null
 		}
-		for (let b of bbb){
-			if (arr.indexOf(b.name)>-1){
-				continue
-			}else{
-				ccc.push(b)
-			}
+	}
+	
+	if(new_[1] != old_[1]){
+		if (typeof(OrderTable.value) != "undefined" && OrderTable.value.current.row){
+			data.nodeTableP.filters = {"pk": OrderTable.value.current.row.node_design}
+		}else{
+			data.nodeTableP.filters = null
 		}
-		data.flowNodeTable.fieldInfo =  ccc
-	}))
-}
+	}
+})
 
-const rowClickFlowTable=(row:any)=>{
-	FlowTableRow = row
-	data.flowNodeTable.filters= {"flow_design_id":row.id}
-}
-
-const rowClickFlowNodeTable=(row:any)=>{
-	FlowNodeTableRow = row
-}
-
-const openFwDesignAdd=()=>{
+const addFlowD=()=>{
+	data.editForm = new FormProps()
+	data.editForm.action = "save"
 	data.editForm.api = FlowApi
-	data.editForm.action = "add"
-	data.editForm.serviceName = "FlowDesignService"
-	data.editForm.fieldInfo = null,
-	data.editForm.defData = null,
-	data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+	data.editForm.repo = "FlowDesign"
+	data.editForm.hideLabel = ["id","created_time","modified_time","code"]
 	data.editForm.disabledLabel = ["version"]
+
 	data.showDialog = true
 }
 
-const openFwDesignEdit=(row:any)=>{
-	data.editForm.api = FlowApi
-	data.editForm.action = "edit"
-	data.editForm.serviceName = "FlowDesignService"
-	data.editForm.pk = row.id
-	data.editForm.fieldInfo = null,
-	data.editForm.defData = null,
-	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["id","code","created_time","modified_time"]
-	data.showDialog = true
-}
-
-const afterSave=()=>{
-	data.showDialog = false
-	init()
-}
-
-const instanceFlow=(row:any)=>{
+const instFlowD=(row:any)=>{
 	let config = new FlowApi.Commit()
-	config.data.service = "FlowService"
 	config.data.action = "instance"
-	config.data.data = {"id":row.id}
+	config.data.data = {"pk":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
+		console.log(res);
 		if(res){
-			ElMessage.success("ok")
+			ElMessage.success(JSON.stringify(res.data))
 		}
 		
 	})
 }
 
-const openFlowNodeAdd=()=>{
-	if (FlowTableRow == null || FlowTableRow.id == null){
+const addFlowNodeOder=()=>{
+	if (FlowTable.value.current.row == null || FlowTable.value.current.row.id == null){
 		ElMessage.warning("没有选中数据")
 	}else{
-		data.editForm.api =  FlowApi
-		data.editForm.action = "add"
-		data.editForm.serviceName = "FlowNodeService"
-		data.editForm.pk = null
-		data.editForm.hideLabel = []
-		data.editForm.disabledLabel = ["flow_design","node_design"]
-		data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
-		data.editForm.defData = {"flow_design":FlowTableRow.id}
+		data.editForm = new FormProps()
+		data.editForm.action = "save"
+		data.editForm.api = FlowApi
+		data.editForm.repo = "FlowNodeOder"
+		data.editForm.defData = {"flow_design": FlowTable.value.current.row.id}
+		data.editForm.hideLabel = ["id","code","created_time","modified_time",]
+		data.editForm.disabledLabel = ["version","tc_action_id","flow_design"]
 		data.showDialog = true
 	}
 }
 
-const openFlowNodeEdit=(row:any)=>{
-	data.editForm.api =  FlowApi
-	data.editForm.action = "edit"
-	data.editForm.serviceName = "FlowNodeService"
-	data.editForm.pk = null
-	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["flow_design","node_design","version"]
-	data.editForm.fieldInfo = data.flowNodeTable.fieldInfo
-	data.editForm.defData = row
-	data.showDialog = true
+
+
+const addNodeD=()=>{	
+	// if (OrderTable.value.current.row == null || OrderTable.value.current.row.id == null){
+	// 	ElMessage.warning("没有选中数据")
+	// }else{
+		data.editForm = new FormProps()
+		data.editForm.action = "save"
+		data.editForm.api = FlowApi
+		data.editForm.repo = "NodeDesign"
+		data.editForm.pk = null
+		data.editForm.fieldInfo = null
+		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+		data.editForm.disabledLabel = ["version","test_case"]
+		data.showDialog = true
+	
+}
+
+const addTcCheck=()=>{
+	if (OrderTable.value.current.row == null || OrderTable.value.current.row.id == null){
+		ElMessage.warning("没有选中数据")
+	}else{
+		data.editForm = new FormProps()
+		data.editForm.action = "save"
+		data.editForm.api = TesterApi
+		data.editForm.repo = "TcCheckPoint"
+		data.editForm.pk = null
+		data.editForm.fieldInfo = null
+		data.editForm.defData = {"tc_data_id":OrderTable.value.current.row.id}
+		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
+		data.editForm.disabledLabel = ["version","tc_data_id"]
+		data.showDialog = true
+	}
+}
+
+function reload(repo:string){
+	if(repo == 'FlowDesign'){
+		data.flowTableP.filters = {}
+	}
+	else if(repo == 'FlowNodeOder'){
+		data.orderTableP.filters = {"flow_design_id": FlowTable.value.current.row.id}
+	}
+	else if(repo == 'NodeDesign'){
+		data.nodeTableP.filters = {"pk": OrderTable.value.current.row.node_design}
+	}
+
+}
+
+const afterSave=(f:any)=>{
+	data.showDialog = false
+	reload(f.repo)
 }
 
 init()
+let noEditFields = ["id","code","created_time","modified_time","version","ver_status","flow_design"]
 </script>
 
 <template>
-	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="openFwDesignAdd">新增</el-button>
-	</el-row>
-
-	<el-dialog v-model="data.showDialog" 
+	<el-dialog 
+	v-model="data.showDialog" 
 	:close-on-click-modal="false"
+	destroy-on-close
     center
 	>
 		<EditForm
 		ref="DialogForm" 
 		:action = data.editForm.action
 		:api = data.editForm.api
-		:serviceName = data.editForm.serviceName
+		:repo = data.editForm.repo
 		:pk = data.editForm.pk
 		:fieldInfo = data.editForm.fieldInfo
 		:defData = data.editForm.defData
@@ -207,84 +227,79 @@ init()
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly
 		:noSave = data.editForm.noSave
-		@afterSave="afterSave"
+		@afterSave = "afterSave"
 		></EditForm>
 	</el-dialog>
+
+	<el-row justify="center" style="margin: 5px;">
+		<span>FlowTable</span>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="addFlowD">新增</el-button>
+	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
 		ref="FlowTable"
-		:api=data.flowTable.api
-		:action=data.flowTable.action
-		:serviceName=data.flowTable.serviceName
-		:filters = data.flowTable.filters
-		:pageSize=data.flowTable.pageSize
-		:fieldInfo=data.flowTable.fieldInfo
-		:colwidth=data.flowTable.colwidth
-		@rowClick="rowClickFlowTable"
+		:api=data.flowTableP.api
+		:repo=data.flowTableP.repo
+		:filters = data.flowTableP.filters
+		:pageSize=data.flowTableP.pageSize
+		:fieldInfo=data.flowTableP.fieldInfo
+		:colwidth=data.flowTableP.colwidth
+		:noEditFields = noEditFields
+		@rowClick="updata"
+		@afterInit="updata"
 		>
-			<template v-slot:SingleTableCol >
-				<el-table-column fixed="right" label="操作栏" width="200" >
-					<template #default="scope">
-					<el-row>
-						<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="instanceFlow(scope.row)"
-							>
-							实例化
-						</el-button>
-						</el-col>
-						<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="openFwDesignEdit(scope.row)"
-							>
-							编辑
-						</el-button>
-						</el-col>
-					</el-row>
-					</template>
-				</el-table-column>
-			</template>
 		</SingleTable>
 	</el-row>
 
-	<el-row style="text-align: left; margin: 5px;">
-		<el-button type="primary" plain @click="openFlowNodeAdd">新增</el-button> 
+	<el-row justify="center" style="margin: 5px;">
+		<span>OrderTable</span>
 	</el-row>
-	
+
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="addFlowNodeOder">新增</el-button>
+	</el-row>
+
 	<el-row style="text-align: left; margin: 5px;">
 		<SingleTable
-		ref="FlowNodeTable"
-		:api=data.flowNodeTable.api
-		:action=data.flowNodeTable.action
-		:serviceName=data.flowNodeTable.serviceName
-		:filters = data.flowNodeTable.filters
-		:pageSize=data.flowNodeTable.pageSize
-		:fieldInfo=data.flowNodeTable.fieldInfo
-		:colwidth=data.flowNodeTable.colwidth
-		@rowClick="rowClickFlowNodeTable"
+		ref="OrderTable"
+		:api=data.orderTableP.api
+		:repo=data.orderTableP.repo
+		:filters = data.orderTableP.filters
+		:pageSize=data.orderTableP.pageSize
+		:fieldInfo=data.orderTableP.fieldInfo
+		:noEditFields = noEditFields
+		:colwidth=data.orderTableP.colwidth
+		@rowClick="updata"
+		@afterInit="updata"
 		>
-			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="操作栏" width="100" >
-				<template #default="scope">
-				<el-row>
-					<el-col :span="11">
-						<el-button
-							type="primary"
-							size="small"
-							@click="openFlowNodeEdit(scope.row)"
-							>
-							编辑
-						</el-button>
-					</el-col>
-				</el-row>
-				</template>
-			</el-table-column>
-			</template>
+		</SingleTable>
+	</el-row>
+
+	<el-row justify="center" style="margin: 5px;">
+		<span>NodeTable</span>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="addNodeD">新增</el-button>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable
+		ref="NodeTable"
+		:api=data.nodeTableP.api
+		:repo=data.nodeTableP.repo
+		:filters = data.nodeTableP.filters
+		:pageSize=data.nodeTableP.pageSize
+		:fieldInfo=data.nodeTableP.fieldInfo
+		:noEditFields = noEditFields
+		:colwidth=data.nodeTableP.colwidth
+		@rowClick="updata"
+		@afterInit="updata"
+		>
 		</SingleTable>
 	</el-row>
 
@@ -293,5 +308,4 @@ init()
 <style scoped>
 
 </style>
-
 

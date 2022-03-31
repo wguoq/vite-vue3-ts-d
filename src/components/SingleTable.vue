@@ -19,7 +19,7 @@ class Field{
 
 interface Props{
 	api:any,
-	serviceName: string,
+	repo: string,
 	filters?: {[key: string]: any;}|null,
 	pageSize:number,
 	fieldInfo?: Field[]|null,
@@ -29,7 +29,7 @@ interface Props{
 
 const props = withDefaults(defineProps<Props>(),{
 	api:"",
-	serviceName: "",
+	repo: "",
 	filters: null,
 	pageSize:10,
 	fieldInfo:null,
@@ -65,7 +65,7 @@ defineExpose({
 
 const filterData=()=>{
 	let config = new props.api.Query()
-	config.params.service = props.serviceName
+	config.params.repo = props.repo
 	config.params.action = "filter"
 	config.params.filters = props.filters
 	config.params.pageSize = data.pageSize
@@ -102,7 +102,7 @@ function init(){
 	//处理FieldInfo,null就去查询
 	if(!props.fieldInfo){
 		let config = new props.api.Query()
-		config.params.service = props.serviceName
+		config.params.repo = props.repo
 		config.params.action = "getFieldInfo"
 		let load = loading()
 		axiosSend(config).then((res:any)=>{
@@ -161,7 +161,7 @@ function delTip(row:any){
 }
 function delCurrentRow(){
 	let config = new props.api.Commit()
-	config.data.service = props.serviceName
+	config.data.repo = props.repo
 	config.data.action = 'del'
 	config.data.data = {'pk': data.currentRow[data.pkName]}
 	let load = loading()
@@ -204,9 +204,9 @@ watch(props,()=>init())
 	>
 		<EditForm
 		ref="DialogForm" 
-		action = "edit"
+		action = "save"
 		:api = props.api
-		:serviceName = props.serviceName
+		:repo = props.repo
 		:pk = data.editPk
 		:fieldInfo = props.fieldInfo
 		:disabledLabel= props.noEditFields

@@ -21,7 +21,7 @@ class Field{
 interface Props{
 	action: string,
 	api:any,
-	serviceName: string,
+	repo: string,
 	pk?: any|null,
 	fieldInfo?: Field[]|null,
 	defData?: {[key: string]: any;}|null,
@@ -34,7 +34,7 @@ interface Props{
 const props = withDefaults(defineProps<Props>(),{
 	action: "",
 	api: "",
-	serviceName: "",
+	repo: "",
 	pk: "",
 	fieldInfo: null,
 	formData: null,
@@ -57,7 +57,7 @@ const data = reactive<Data>({
 
 const doSvae=()=>{
 	let config = new props.api.Commit()
-	config.data.service = props.serviceName
+	config.data.repo = props.repo
 	config.data.action = props.action
 	config.data.data = data.formData
 	let load = loading()
@@ -82,11 +82,11 @@ const setDefData=()=>{
 function init(){
 	//由于axios是异步的，需要分情况处理
 	let config1 = new props.api.Query()
-	config1.params.service = props.serviceName
+	config1.params.repo = props.repo
 	config1.params.action = "getFieldInfo"
 
 	let config2 = new props.api.Query()
-	config2.params.service = props.serviceName
+	config2.params.repo = props.repo
 	config2.params.action = "get"
 	config2.params.filters = {"pk":props.pk}
 

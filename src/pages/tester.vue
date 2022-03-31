@@ -2,14 +2,14 @@
 import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive,watch } from 'vue';
-import { Callback, ElMessage } from 'element-plus';
+import { ElMessage } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import TesterApi from 'api/tester.ts'
 // import {SingleTableProps} from 'components/PropsClass.ts'
 
 class TableProps{
 	api:any = null
-	serviceName: string = ""
+	repo: string = ""
 	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
 	fieldInfo: any = null
@@ -18,7 +18,7 @@ class TableProps{
 
 class FormProps{
 	api:any = ""
-	serviceName: string = ""
+	repo: string = ""
 	action: string = "add"
 	pk: any = null
 	fieldInfo: any[]|null = null
@@ -52,25 +52,25 @@ function init(){
 
 	data.tcApiTableP = new TableProps()
 	data.tcApiTableP.api = TesterApi
-	data.tcApiTableP.serviceName = "TcApiService"
+	data.tcApiTableP.repo = "TcApi"
 	data.tcApiTableP.filters = {}
 	data.tcApiTableP.colwidth = 150
 
 	data.testCaseTableP = new TableProps()
 	data.testCaseTableP.api = TesterApi
-	data.testCaseTableP.serviceName = "TestCaseService"
+	data.testCaseTableP.repo = "TestCase"
 	data.testCaseTableP.filters = null
 	data.testCaseTableP.colwidth = 150
 
 	data.tcApiDataTableP = new TableProps()
 	data.tcApiDataTableP.api = TesterApi
-	data.tcApiDataTableP.serviceName = "TcApiDataService"
+	data.tcApiDataTableP.repo = "TcApiData"
 	data.tcApiDataTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
 
 	data.tcCheckTableP = new TableProps()
 	data.tcCheckTableP.api = TesterApi
-	data.tcCheckTableP.serviceName = "TcCheckPointService"
+	data.tcCheckTableP.repo = "TcCheckPoint"
 	data.tcCheckTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
 
@@ -132,9 +132,9 @@ watch([TcApiTableRow,TestCaseTableRow,TcApiDataTableRow],(new_,old_) => {
 
 const addTcApi=()=>{
 	data.editForm = new FormProps()
-	data.editForm.action = "add"
+	data.editForm.action = "save"
 	data.editForm.api = TesterApi
-	data.editForm.serviceName = "TcApiService"
+	data.editForm.repo = "TcApi"
 	data.editForm.hideLabel = ["id","created_time","modified_time"]
 	data.editForm.disabledLabel = ["version"]
 	data.showDialog = true
@@ -145,9 +145,9 @@ const addTestCase=()=>{
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
-		data.editForm.action = "add"
+		data.editForm.action = "save"
 		data.editForm.api = TesterApi
-		data.editForm.serviceName = "TestCaseService"
+		data.editForm.repo = "TestCase"
 		data.editForm.defData = {"tc_action_id": TcApiTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
 		data.editForm.disabledLabel = ["version","tc_action_id"]
@@ -157,9 +157,8 @@ const addTestCase=()=>{
 
 const runTestCase=(row:any)=>{
 	let config = new TesterApi.Commit()
-	config.data.service = "TesterService"
 	config.data.action = "run"
-	config.data.data = {"id":row.id}
+	config.data.data = {"pk":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -176,9 +175,9 @@ const addTcApiData=()=>{
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
-		data.editForm.action = "add"
+		data.editForm.action = "save"
 		data.editForm.api = TesterApi
-		data.editForm.serviceName = "TcApiDataService"
+		data.editForm.repo = "TcApiData"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
 		data.editForm.defData = {"test_case":TestCaseTable.value.current.row.id}
@@ -193,9 +192,9 @@ const addTcCheck=()=>{
 		ElMessage.warning("没有选中数据")
 	}else{
 		data.editForm = new FormProps()
-		data.editForm.action = "add"
+		data.editForm.action = "save"
 		data.editForm.api = TesterApi
-		data.editForm.serviceName = "TcCheckPointService"
+		data.editForm.repo = "TcCheckPoint"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
 		data.editForm.defData = {"tc_data_id":TcApiDataTable.value.current.row.id}
@@ -205,17 +204,17 @@ const addTcCheck=()=>{
 	}
 }
 
-function reload(serviceName:string){
-	if(serviceName == 'TcApiService'){
+function reload(repo:string){
+	if(repo == 'TcApi'){
 		data.tcApiTableP.filters = {}
 	}
-	else if(serviceName == 'TestCaseService'){
+	else if(repo == 'TestCase'){
 		data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value.current.row.id}
 	}
-	else if(serviceName == 'TcApiDataService'){
+	else if(repo == 'TcApiData'){
 		data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value.current.row.id}
 	}
-	else if(serviceName == 'TcCheckPointService'){
+	else if(repo == 'TcCheckPoint'){
 		data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value.current.row.id}
 	}
 
@@ -223,7 +222,7 @@ function reload(serviceName:string){
 
 const afterSave=(f:any)=>{
 	data.showDialog = false
-	reload(f.serviceName)
+	reload(f.repo)
 }
 
 init()
@@ -241,7 +240,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		ref="DialogForm" 
 		:action = data.editForm.action
 		:api = data.editForm.api
-		:serviceName = data.editForm.serviceName
+		:repo = data.editForm.repo
 		:pk = data.editForm.pk
 		:fieldInfo = data.editForm.fieldInfo
 		:defData = data.editForm.defData
@@ -265,7 +264,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		<SingleTable
 		ref="TcApiTable"
 		:api=data.tcApiTableP.api
-		:serviceName=data.tcApiTableP.serviceName
+		:repo=data.tcApiTableP.repo
 		:filters = data.tcApiTableP.filters
 		:pageSize=data.tcApiTableP.pageSize
 		:fieldInfo=data.tcApiTableP.fieldInfo
@@ -289,7 +288,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		<SingleTable
 		ref="TestCaseTable"
 		:api=data.testCaseTableP.api
-		:serviceName=data.testCaseTableP.serviceName
+		:repo=data.testCaseTableP.repo
 		:filters = data.testCaseTableP.filters
 		:pageSize=data.testCaseTableP.pageSize
 		:fieldInfo=data.testCaseTableP.fieldInfo
@@ -328,7 +327,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		<SingleTable
 		ref="TcApiDataTable"
 		:api=data.tcApiDataTableP.api
-		:serviceName=data.tcApiDataTableP.serviceName
+		:repo=data.tcApiDataTableP.repo
 		:filters = data.tcApiDataTableP.filters
 		:pageSize=data.tcApiDataTableP.pageSize
 		:fieldInfo=data.tcApiDataTableP.fieldInfo
@@ -352,7 +351,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		<SingleTable
 		ref="TcCheckTable"
 		:api=data.tcCheckTableP.api
-		:serviceName=data.tcCheckTableP.serviceName
+		:repo=data.tcCheckTableP.repo
 		:filters = data.tcCheckTableP.filters
 		:pageSize=data.tcCheckTableP.pageSize
 		:fieldInfo=data.tcCheckTableP.fieldInfo

@@ -4,7 +4,7 @@ class Query{
 	baseURL="/api"
 	timeout=5000
 	params={
-		service:"",
+		repo:"",
 		action:"",
 		filters:{},
 		pageSize:5,
@@ -18,7 +18,7 @@ class Commit{
 	baseURL="/api"
 	timeout=5000
 	data={
-		service:"",
+		repo:"",
 		action:"",
 		data :{},
 	}

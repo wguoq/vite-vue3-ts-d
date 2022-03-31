@@ -23,15 +23,17 @@ interface Props{
 	filters?: {[key: string]: any;}|null,
 	pageSize:number,
 	fieldInfo?: Field[]|null,
+	noEditFields?: string[],
 	colwidth?: any,
 }
 
 const props = withDefaults(defineProps<Props>(),{
 	api:"",
 	serviceName: "",
-	filters: ()=>{return {}},
+	filters: null,
 	pageSize:10,
-	fieldInfo:()=>[],
+	fieldInfo:null,
+	noEditFields:[],
 	colwidth:"auto",
 
 })
@@ -172,7 +174,7 @@ function delCurrentRow(){
 
 init()
 watch(props,()=>init())
-const disabledLabel = ["id","code","created_time","modified_time","version","ver_status"]
+
 </script>
 
 <template >
@@ -206,7 +208,8 @@ const disabledLabel = ["id","code","created_time","modified_time","version","ver
 		:api = props.api
 		:serviceName = props.serviceName
 		:pk = data.editPk
-		:disabledLabel= disabledLabel
+		:fieldInfo = props.fieldInfo
+		:disabledLabel= props.noEditFields
 		@afterSave = "afterSave"
 		></EditForm>
 	</el-dialog>

@@ -130,17 +130,6 @@ watch([TcApiTableRow,TestCaseTableRow,TcApiDataTableRow],(new_,old_) => {
 
 })
 
-function editRow(row: any,api: any,serviceName: string){
-	data.editForm = new FormProps()
-	data.editForm.action = "edit"
-	data.editForm.api = api
-	data.editForm.serviceName = serviceName
-	data.editForm.pk = row.id
-	data.editForm.hideLabel = []
-	data.editForm.disabledLabel = ["id","created_time","modified_time","version"]
-	data.showDialog = true
-}
-
 const addTcApi=()=>{
 	data.editForm = new FormProps()
 	data.editForm.action = "add"
@@ -237,19 +226,8 @@ const afterSave=(f:any)=>{
 	reload(f.serviceName)
 }
 
-function delRow(row: any,api: any,serviceName: string){
-	let config = new api.Commit()
-	config.data.service = serviceName
-	config.data.action = 'del'
-	config.data.data = {'pk': row.id}
-	let load = loading()
-	axiosSend(config).then((res:any)=>{
-		load.close()
-		reload(serviceName)
-	})
-}
-
 init()
+let noEditFields = ["id","code","created_time","modified_time","version","ver_status"]
 </script>
 
 <template>
@@ -292,6 +270,7 @@ init()
 		:pageSize=data.tcApiTableP.pageSize
 		:fieldInfo=data.tcApiTableP.fieldInfo
 		:colwidth=data.tcApiTableP.colwidth
+		:noEditFields = noEditFields
 		@rowClick="updata"
 		@afterInit="updata"
 		>
@@ -314,6 +293,7 @@ init()
 		:filters = data.testCaseTableP.filters
 		:pageSize=data.testCaseTableP.pageSize
 		:fieldInfo=data.testCaseTableP.fieldInfo
+		:noEditFields = noEditFields
 		:colwidth=data.testCaseTableP.colwidth
 		@rowClick="updata"
 		@afterInit="updata"
@@ -352,6 +332,7 @@ init()
 		:filters = data.tcApiDataTableP.filters
 		:pageSize=data.tcApiDataTableP.pageSize
 		:fieldInfo=data.tcApiDataTableP.fieldInfo
+		:noEditFields = noEditFields
 		:colwidth=data.tcApiDataTableP.colwidth
 		@rowClick="updata"
 		@afterInit="updata"
@@ -375,6 +356,7 @@ init()
 		:filters = data.tcCheckTableP.filters
 		:pageSize=data.tcCheckTableP.pageSize
 		:fieldInfo=data.tcCheckTableP.fieldInfo
+		:noEditFields = noEditFields
 		:colwidth=data.tcCheckTableP.colwidth
 		@rowClick="updata"
 		@afterInit="updata"

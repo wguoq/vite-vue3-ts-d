@@ -56,6 +56,7 @@ const data = reactive<Data>({
 })
 
 const doSvae=()=>{
+	emits('beforeSave',data.formData)
 	let config = new props.api.Commit()
 	config.data.repo = props.repo
 	config.data.action = props.action
@@ -63,6 +64,7 @@ const doSvae=()=>{
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
+		emits('afterSave')
 	})
 }
 
@@ -125,14 +127,8 @@ function init(){
 
 const emits = defineEmits<{
 	(event: 'beforeSave', formData: any):void,
-	(event: 'afterSave', props: any):void,
+	(event: 'afterSave'):void,
 }>()
-
-const Save =()=>{
-	emits('beforeSave',data.formData)
-	doSvae()
-	emits('afterSave',props)
-}
 
 defineExpose({
 	data
@@ -187,7 +183,7 @@ watch(props,()=>init())
 			</template>
 			</el-row>
 			<el-row justify="center" v-if="!props.noSave">
-				<el-button type="primary" @click="Save">Save</el-button>
+				<el-button type="primary" @click="doSvae">Save</el-button>
 			</el-row>
 			<slot name="formSlot"></slot>
 		</el-form>

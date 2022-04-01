@@ -31,37 +31,46 @@ const props = withDefaults(defineProps<Props>(),{
 	api:"",
 	repo: "",
 	filters: null,
-	pageSize:10,
+	pageSize:5,
 	fieldInfo:null,
-	noEditFields:[],
+	noEditFields:()=>[],
 	colwidth:"auto",
-
 })
 
 const data = reactive({
 	fieldInfo: [new Field()],
 	tableData:[],
-	pageSize:10,
+	pageSize:5,
 	currentPage:1,
 	total:0,
 	pkName:"",
-	currentRow:"",
-	showDialog:false,
-	showTip:false,
-	editPk: null
+	editDialog:false,
+	delTip:false,
 })
 
 const current = reactive({
+	page:1,
 	row:null
 })
-
-const currentChange=(row:any)=>{
-	current.row = row
-}
 
 defineExpose({
 	current
 })
+
+const handleCurrentChange = (currentRow:any,oldCurrentRow:any) => {
+	current.row = currentRow
+ 	emits('currentChange',currentRow,oldCurrentRow)
+}
+
+const rowClick = (row:any) => {
+	current.row = row
+	emits('rowClick',row)
+}
+
+const emits = defineEmits<{
+	(event: 'rowClick',row:any):void,
+	(event: 'currentChange',currentRow:any,oldCurrentRow:any):void,
+}>()
 
 const filterData=()=>{
 	let config = new props.api.Query()
@@ -69,7 +78,7 @@ const filterData=()=>{
 	config.params.action = "filter"
 	config.params.filters = props.filters
 	config.params.pageSize = data.pageSize
-	config.params.pageNumber = data.currentPage
+	config.params.pageNumber = current.page
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -80,24 +89,7 @@ const filterData=()=>{
 	})
 }
 
-function getPkName(){
-	for(let f of data.fieldInfo){
-		if (f.primary_key){
-			data.pkName = f.name
-			break
-		}
-	}
-}
-
-const emits = defineEmits<{
-	(event: 'beforeInit'):void,
-	(event: 'afterInit'):void,
-	(event: 'rowClick',row:any):void,
-	(event: 'cellDbclick',row:any,column:any):void,
-}>()
-
 function init(){
-	emits('beforeInit')
 	current.row = null
 	//处理FieldInfo,null就去查询
 	if(!props.fieldInfo){
@@ -129,17 +121,15 @@ function init(){
 				data.tableData = []
 			}
 	}
-	
-	emits('afterInit')
 }
 
-const rowClick = (row:any)=>{
-	current.row = row
-  	emits('rowClick',row)
-}
-
-const celldblclick =(row:any, column:any, cell:any, event:any)=>{
-	emits('cellDbclick',row,column)
+function getPkName(){
+	for(let f of data.fieldInfo){
+		if (f.primary_key){
+			data.pkName = f.name
+			break
+		}
+	}
 }
 
 const currentPageChange =()=>{
@@ -147,27 +137,28 @@ const currentPageChange =()=>{
 }
 
 function editRow(row:any){
-	data.editPk = row[data.pkName]
-	data.showDialog = true
+	current.row = row
+	data.editDialog = true
 }
 
 function afterSave(){
-	data.showDialog = false
+	data.editDialog = false
 	filterData()
 }
 function delTip(row:any){
-	data.showTip = true
-	data.currentRow = row
+	current.row = row
+	data.delTip = true
+	
 }
 function delCurrentRow(){
 	let config = new props.api.Commit()
 	config.data.repo = props.repo
 	config.data.action = 'del'
-	config.data.data = {'pk': data.currentRow[data.pkName]}
+	config.data.data = {'pk': current.row[data.pkName]}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
-		data.showTip = false
+		data.delTip = false
 		filterData()
 	})
 }
@@ -179,7 +170,7 @@ watch(props,()=>init())
 
 <template >
 	<el-dialog
-		v-model="data.showTip"
+		v-model="data.delTip"
 		width="30%"
 		:close-on-click-modal="false"
 		destroy-on-close
@@ -188,7 +179,7 @@ watch(props,()=>init())
 		<span>删除数据?</span>
 		<template #footer>
 		<span class="dialog-footer">
-			<el-button @click="data.showTip = false">Cancel</el-button>
+			<el-button @click="data.delTip = false">Cancel</el-button>
 			<el-button type="primary" @click="delCurrentRow"
 			>Confirm</el-button
 			>
@@ -197,7 +188,7 @@ watch(props,()=>init())
 	</el-dialog>
 
 	<el-dialog 
-	v-model="data.showDialog" 
+	v-model="data.editDialog" 
 	:close-on-click-modal="false"
 	destroy-on-close
     center
@@ -207,7 +198,7 @@ watch(props,()=>init())
 		action = "save"
 		:api = props.api
 		:repo = props.repo
-		:pk = data.editPk
+		:pk = current.row[data.pkName]
 		:fieldInfo = props.fieldInfo
 		:disabledLabel= props.noEditFields
 		@afterSave = "afterSave"
@@ -220,8 +211,7 @@ watch(props,()=>init())
 		max-height="300"
 		highlight-current-row
 		border 
-		@current-change="currentChange"
-		@cell-dblclick="celldblclick"
+		@current-change="handleCurrentChange"
 		@row-click="rowClick"
 	>  
 		<el-table-column v-if="data.tableData.length > 0" type="index" width="50" />
@@ -269,7 +259,7 @@ watch(props,()=>init())
 	
 	<el-row style="text-align: left; margin-top: 5px;">
 		<el-pagination
-		v-model:currentPage="data.currentPage"
+		v-model:currentPage="current.page"
 		v-model:page-size="data.pageSize"
 		:total="data.total"
 		layout="total, prev, pager, next, jumper"

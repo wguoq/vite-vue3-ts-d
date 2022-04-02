@@ -7,6 +7,7 @@
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 class Field{
 	name:string = ""
@@ -46,7 +47,7 @@ const props = withDefaults(defineProps<Props>(),{
 })
 
 interface Data {
-	fieldInfo:Field[] | null
+	fieldInfo:Field[] 
 	formData:{[key: string]: any;}
 }
 
@@ -56,6 +57,15 @@ const data = reactive<Data>({
 })
 
 const doSvae=()=>{
+	//把JSON格式化的数据转回string
+	try {
+		parseJson()
+	} catch (error) {
+		ElMessage.error('json格式错误')
+		return false
+	}
+	delete data.formData.created_time
+	delete data.formData.modified_time
 	emits('beforeSave',data.formData)
 	let config = new props.api.Commit()
 	config.data.repo = props.repo
@@ -77,6 +87,30 @@ const setDefData=()=>{
 			}else{
 				continue
 			}
+		}
+	}
+}
+
+const stringifyJson=()=>{
+	for(let field of data.fieldInfo){
+		if(field.type == "JSONField"){
+			if(data.formData[field.name]){
+				data.formData[field.name] = JSON.stringify(data.formData[field.name],null,4)
+			}else{}
+		}else{
+			continue
+		}
+	}
+}
+
+const parseJson=()=>{
+	for(let field of data.fieldInfo){
+		if(field.type == "JSONField"){
+			if (data.formData[field.name]){
+				data.formData[field.name] = JSON.parse(data.formData[field.name])
+			}else{}
+		}else{
+			continue
 		}
 	}
 }
@@ -115,11 +149,14 @@ function init(){
 			axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
 				data.fieldInfo = res1.data.fields
 				data.formData = res2.data.data
+				//处理一下json数据
+				stringifyJson()
 			}))
 		}else{
 			axiosSend(config2).then((res:any)=>{
 				data.formData = res.data.data
 				data.fieldInfo = props.fieldInfo
+				stringifyJson()
 			})
 		}
 	}
@@ -170,9 +207,11 @@ watch(props,()=>init())
 			<template v-for=" field of data.fieldInfo " >
 				<el-col :span="11" style="margin-left: 5px;" v-show="!isInList(field.name,props.hideLabel)">
 					<el-form-item :label="field.verbose_name" >
+						<!-- <pre>{{data.formData[field.name]}}</pre> -->
 						<el-input
 						v-model = data.formData[field.name]
 						:type = "getInputType(field.type)"
+						:row = 3
 						:placeholder="field.help_text"	
 						:disabled="isInList(field.name,props.disabledLabel) || props.readOnly"					
 						autosize

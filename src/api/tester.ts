@@ -5,7 +5,7 @@ class Query{
 	timeout=5000
 	params={
 		repo:"",
-		action:"",
+		action:"filter",
 		filters:{},
 		pageSize:5,
 		pageNumber:1,

@@ -131,7 +131,6 @@ const runTestCase=(row:any)=>{
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
-		console.log(res);
 		if(res){
 			ElMessage.success(JSON.stringify(res.data))
 		}
@@ -226,7 +225,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		@afterSave = "afterSave(data.editForm.repo)"
 		></EditForm>
 	</el-dialog>
-
+	
 	<el-row justify="center" style="margin: 5px;">
 		<span>ApiTable</span>
 	</el-row>

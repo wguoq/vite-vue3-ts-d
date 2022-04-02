@@ -32,8 +32,10 @@ const data = reactive({
 	flowTableP: new TableProps(),
 	nodeTableP: new TableProps(),
 	orderTableP: new TableProps(),
+	addTableP: new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
+	showListDialog:false
 })
 
 const FlowTable = ref()
@@ -92,7 +94,6 @@ const instFlow=(row:any)=>{
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
-		console.log(res);
 		if(res){
 			ElMessage.success(JSON.stringify(res.data))
 		}
@@ -131,6 +132,40 @@ const addOrder=()=>{
 	}
 }
 
+const fResultRule=()=>{
+	data.addTableP = new TableProps()
+	data.addTableP.api = FlowApi
+	data.addTableP.repo = "FlowResultRule"
+	data.addTableP.filters = {}
+	data.showListDialog = true
+}
+
+const fStatusRule=()=>{
+	data.addTableP = new TableProps()
+	data.addTableP.api = FlowApi
+	data.addTableP.repo = "FlowStatusRule"
+	data.addTableP.filters = {}
+	data.showListDialog = true
+}
+
+const nStatusRule=()=>{
+	data.addTableP = new TableProps()
+	data.addTableP.api = FlowApi
+	data.addTableP.repo = "NodeStatusRule"
+	data.addTableP.filters = {}
+	data.showListDialog = true
+}
+
+const AddTableAdd=()=>{
+	data.editForm = new FormProps()
+	data.editForm.action = "save"
+	data.editForm.api = FlowApi
+	data.editForm.repo = data.addTableP.repo
+	data.editForm.hideLabel = ["id","created_time","modified_time","code","ver_status"]
+	data.editForm.disabledLabel = ["version"]
+	data.showDialog = true
+}
+
 function reload(name:string){
 	if(name == 'FlowDesign'){
 		data.flowTableP.filters = {}
@@ -140,6 +175,9 @@ function reload(name:string){
 	}
 	else if(name == 'FlowNodeOder'){
 		data.orderTableP.filters = {"flow_design": FlowTable.value.current.row.id}
+	}
+	else if(name == 'NodeStatusRule'){
+		data.addTableP.filters = {}
 	}
 }
 
@@ -176,12 +214,40 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		></EditForm>
 	</el-dialog>
 
+	<el-dialog 
+	v-model="data.showListDialog" 
+	:close-on-click-modal="false"
+	width="90%"
+	destroy-on-close
+    center
+	>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="AddTableAdd">新增</el-button>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable
+		ref="AddTable"
+		:api=data.addTableP.api
+		:repo=data.addTableP.repo
+		:filters = data.addTableP.filters
+		:pageSize=data.addTableP.pageSize
+		:fieldInfo=data.addTableP.fieldInfo
+		:colwidth=data.addTableP.colwidth
+		:noEditFields = noEditFields
+		>
+		</SingleTable>
+	</el-row>
+	</el-dialog>
+
 	<el-row justify="center" style="margin: 5px;">
 		<span>FlowTable</span>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addFlow">新增</el-button>
+		<el-button type="primary" plain @click="fResultRule">结果规则</el-button>
+		<el-button type="primary" plain @click="fStatusRule">状态规则</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -220,6 +286,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addNode">新增</el-button>
+		<el-button type="primary" plain @click="nStatusRule">添加状态规则</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">

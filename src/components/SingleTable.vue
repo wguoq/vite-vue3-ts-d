@@ -199,6 +199,7 @@ watch(props,()=>init())
 		:api = props.api
 		:repo = props.repo
 		:pk = current.row[data.pkName]
+		:fieldInfo = data.fieldInfo
 		:disabledLabel= props.noEditFields
 		@afterSave = "afterSave"
 		></EditForm>

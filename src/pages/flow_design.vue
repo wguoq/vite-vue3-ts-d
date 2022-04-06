@@ -3,8 +3,8 @@ import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive,} from 'vue';
 import { ElMessage, ElTable } from 'element-plus';
-import { axiosSend, loading } from 'utils/http.ts'
-import FlowApi from 'api/flow.ts'
+import { axiosSend, loading } from 'utils/http.ts';
+import FlowApi from 'api/flow.ts';
 
 class TableProps{
 	api:any = null
@@ -35,7 +35,9 @@ const data = reactive({
 	addTableP: new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
-	showListDialog:false
+	showListDialog:false,
+	importbutton:false,
+	tmpData:{}
 })
 
 const FlowTable = ref()
@@ -132,37 +134,59 @@ const addOrder=()=>{
 	}
 }
 
-const fResultRule=()=>{
-	data.addTableP = new TableProps()
-	data.addTableP.api = FlowApi
-	data.addTableP.repo = "FlowResultRule"
-	data.addTableP.filters = {}
-	data.showListDialog = true
+const fImportRule=(repo:string)=>{
+	if(FlowTable.value?.current.row){
+		data.tmpData = FlowTable.value.current.row
+		data.addTableP = new TableProps()
+		data.addTableP.api = FlowApi
+		data.addTableP.repo = repo
+		data.addTableP.filters = {}
+		data.showListDialog = true
+		data.importbutton = true
+	}else{
+		ElMessage.warning("没有选中数据")
+	}
 }
 
-const fStatusRule=()=>{
-	data.addTableP = new TableProps()
-	data.addTableP.api = FlowApi
-	data.addTableP.repo = "FlowStatusRule"
-	data.addTableP.filters = {}
-	data.showListDialog = true
+
+const doImport=(row:any,repo:string)=>{
+	let config = new FlowApi.Commit()
+	config.data.repo = "FlowDesign"
+	config.data.action = "save"
+	if(repo === "FlowResultRule"){
+		data.tmpData["fw_result_rule"] = row.id
+	}else if(repo === "FlowStatusRule"){
+		data.tmpData["fw_status_rule"] = row.id
+	}
+	config.data.data = data.tmpData
+	let load = loading()
+	axiosSend(config).then((res:any)=>{
+		load.close()
+		if(res){
+			ElMessage.success(JSON.stringify(res.data))
+			data.showListDialog = false
+		}
+		
+	})
 }
 
-const nStatusRule=()=>{
+
+const nStatusRule=(row:any)=>{
 	data.addTableP = new TableProps()
 	data.addTableP.api = FlowApi
 	data.addTableP.repo = "NodeStatusRule"
-	data.addTableP.filters = {}
+	data.addTableP.filters = {"node_design": row.id}
+	data.editForm = new FormProps()
+	data.editForm.defData = {"node_design": row.id}
 	data.showListDialog = true
 }
 
 const AddTableAdd=()=>{
-	data.editForm = new FormProps()
 	data.editForm.action = "save"
 	data.editForm.api = FlowApi
 	data.editForm.repo = data.addTableP.repo
 	data.editForm.hideLabel = ["id","created_time","modified_time","code","ver_status"]
-	data.editForm.disabledLabel = ["version"]
+	data.editForm.disabledLabel = ["version","node_design"]
 	data.showDialog = true
 }
 
@@ -220,6 +244,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	width="90%"
 	destroy-on-close
     center
+	@close = "data.importbutton = false"
 	>
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="AddTableAdd">新增</el-button>
@@ -236,6 +261,21 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:colwidth=data.addTableP.colwidth
 		:noEditFields = noEditFields
 		>
+			<template v-if="data.importbutton" v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="功能" width="70" >
+				<template #default="scope">
+				<el-row>
+					<el-button
+						type="primary"
+						size="small"
+						@click="doImport(scope.row,data.addTableP.repo)"
+						>
+						导入
+					</el-button>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
 		</SingleTable>
 	</el-row>
 	</el-dialog>
@@ -246,8 +286,8 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addFlow">新增</el-button>
-		<el-button type="primary" plain @click="fResultRule">结果规则</el-button>
-		<el-button type="primary" plain @click="fStatusRule">状态规则</el-button>
+		<el-button type="primary" plain @click="fImportRule('FlowResultRule')">结果规则</el-button>
+		<el-button type="primary" plain @click="fImportRule('FlowStatusRule')">状态规则</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -286,7 +326,6 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addNode">新增</el-button>
-		<el-button type="primary" plain @click="nStatusRule">添加状态规则</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -301,6 +340,21 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:noEditFields = noEditFields
 		@currentChange="NodeTableCurrentChange"
 		>
+			<template v-slot:SingleTableCol >
+			<el-table-column fixed="right" label="功能" width="100" >
+				<template #default="scope">
+				<el-row>
+					<el-button
+						type="primary"
+						size="small"
+						@click="nStatusRule(scope.row)"
+						>
+						状态规则
+					</el-button>
+				</el-row>
+				</template>
+			</el-table-column>
+			</template>
 		</SingleTable>
 	</el-row>
 

@@ -126,6 +126,7 @@ export function axiosSend(config: object){
 				//要添加这句才能发送和接收json格式数据
 				config['headers']['Content-Type'] = 'application/json'
 			}
+      // console.log(config)
 			return config;
 		});
 		//响应拦截器

@@ -181,6 +181,16 @@ const nStatusRule=(row:any)=>{
 	data.showListDialog = true
 }
 
+const nStartRule=(row:any)=>{
+	data.addTableP = new TableProps()
+	data.addTableP.api = FlowApi
+	data.addTableP.repo = "NodeStartRule"
+	data.addTableP.filters = {"node_design": row.id}
+	data.editForm = new FormProps()
+	data.editForm.defData = {"node_design": row.id}
+	data.showListDialog = true
+}
+
 const AddTableAdd=()=>{
 	data.editForm.action = "save"
 	data.editForm.api = FlowApi
@@ -201,7 +211,10 @@ function reload(name:string){
 		data.orderTableP.filters = {"flow_design": FlowTable.value.current.row.id}
 	}
 	else if(name == 'NodeStatusRule'){
-		data.addTableP.filters = {}
+		data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
+	}
+	else if(name == 'NodeStartRule'){
+		data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
 	}
 }
 
@@ -341,9 +354,16 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		@currentChange="NodeTableCurrentChange"
 		>
 			<template v-slot:SingleTableCol >
-			<el-table-column fixed="right" label="功能" width="100" >
+			<el-table-column fixed="right" label="功能" width="200" >
 				<template #default="scope">
 				<el-row>
+					<el-button
+						type="primary"
+						size="small"
+						@click="nStartRule(scope.row)"
+						>
+						启动规则
+					</el-button>
 					<el-button
 						type="primary"
 						size="small"

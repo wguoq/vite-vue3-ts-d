@@ -90,7 +90,7 @@ function httpError(error:any){
 		const errorcode = error.response.status
 		for (let index in codes){
 			if (errorcode==index){
-				ElMessage.error(errorcode + ': ' + codes[index][0])
+				ElMessage.error(errorcode + ': ' + codes[index][0] + ': ' + error.response.data.message)
 				break
 			}
 		}

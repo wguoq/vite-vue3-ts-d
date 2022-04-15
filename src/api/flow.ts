@@ -21,6 +21,7 @@ class Commit{
 		repo:"",
 		action:"",
 		data :{},
+		condition:[],
 	}
 }
 

@@ -5,6 +5,7 @@ import { ref,reactive,} from 'vue';
 import { ElMessage, ElTable } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts';
 import FlowApi from 'api/flow.ts';
+import axios from 'axios';
 
 class TableProps{
 	api:any = null
@@ -37,7 +38,8 @@ const data = reactive({
 	showDialog:false,
 	showListDialog:false,
 	importbutton:false,
-	tmpData:{}
+	tmpData:{},
+	condition:{}
 })
 
 const FlowTable = ref()
@@ -132,6 +134,36 @@ const addOrder=()=>{
 		ElMessage.warning("没有选中数据")
 
 	}
+}
+
+const addOrderG=()=>{	
+	let config1 = new FlowApi.Query()
+	config1.params.repo = 'FlowNodeOder'
+	config1.params.action = "getFieldInfoT"
+
+	let config2 = new FlowApi.Query()
+	config2.params.repo = 'FlowDesign'
+	config2.params.action = "getFieldInfoT"
+
+	let config3 = new FlowApi.Query()
+	config3.params.repo = 'NodeDesign'
+	config3.params.action = "getFieldInfoT"
+	axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)]).then(axios.spread(function (res1,res2,res3) {
+		let a = res1.data.fields
+		let b = res2.data.fields
+		let c = res3.data.fields
+		console.log([...a,...b,...c]);
+		data.condition = ["Flow_Node_Oder@flow_design=Flow_Design@id","Flow_Node_Oder@node_design=Node_Design@id"]
+		data.editForm = new FormProps()
+		data.editForm.action = "gsave"
+		data.editForm.api = FlowApi
+		data.editForm.repo = ''
+		data.editForm.pk = null
+		data.editForm.fieldInfo = [...a,...b,...c]
+		data.showDialog = true
+
+	}))
+
 }
 
 const fImportRule=(repo:string)=>{
@@ -247,6 +279,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly
 		:noSave = data.editForm.noSave
+		:condition=data.condition
 		@afterSave = "afterSave(data.editForm.repo)"
 		></EditForm>
 	</el-dialog>
@@ -384,6 +417,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addOrder">新增</el-button>
+		<el-button type="primary" plain @click="addOrderG">组合新增</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">

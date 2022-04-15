@@ -30,6 +30,7 @@ interface Props{
 	hideLabel?: any[],
 	readOnly?: boolean,
 	noSave?: boolean,
+	condition?:any,
 }
 
 const props = withDefaults(defineProps<Props>(),{
@@ -44,16 +45,19 @@ const props = withDefaults(defineProps<Props>(),{
 	hideLabel: ()=>[],
 	readOnly: false,
 	noSave: false,
+	condition:{},
 })
 
 interface Data {
 	fieldInfo:Field[] 
 	formData:{[key: string]: any;}
+
 }
 
 const data = reactive<Data>({
 	fieldInfo: [new Field()],
 	formData:{},
+
 })
 
 const doSvae=()=>{
@@ -71,6 +75,7 @@ const doSvae=()=>{
 	config.data.repo = props.repo
 	config.data.action = props.action
 	config.data.data = data.formData
+	config.data.condition = props.condition
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -206,7 +211,7 @@ watch(props,()=>init())
 			<el-row>
 			<template v-for=" field of data.fieldInfo " >
 				<el-col :span="11" style="margin-left: 5px;" v-show="!isInList(field.name,props.hideLabel)">
-					<el-form-item :label="field.verbose_name" >
+					<el-form-item :label="field.verbose_name + ' : '+field.name" >
 						<!-- <pre>{{data.formData[field.name]}}</pre> -->
 						<el-input
 						v-model = data.formData[field.name]

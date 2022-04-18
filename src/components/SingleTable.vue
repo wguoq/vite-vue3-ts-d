@@ -18,21 +18,23 @@ class Field{
 }
 
 interface Props{
-	api:any,
-	repo: string,
+	api?:any,
+	repo?: any,
 	filters?: {[key: string]: any;}|null,
 	pageSize:number,
 	fieldInfo?: Field[]|null,
+	tableData?:[],
 	noEditFields?: string[],
 	colwidth?: any,
 }
 
 const props = withDefaults(defineProps<Props>(),{
-	api:"",
-	repo: "",
+	api:null,
+	repo:null,
 	filters: null,
 	pageSize:5,
 	fieldInfo:null,
+	tableData:()=>[],
 	noEditFields:()=>[],
 	colwidth:"auto",
 })
@@ -91,8 +93,11 @@ const filterData=()=>{
 
 function init(){
 	current.row = null
+	if (props.api == null || props.repo == null){
+		return true	
+	}
 	//处理FieldInfo,null就去查询
-	if(!props.fieldInfo){
+	if(props.fieldInfo == null){
 		let config = new props.api.Query()
 		config.params.repo = props.repo
 		config.params.action = "getFieldInfo"
@@ -109,7 +114,7 @@ function init(){
 			if (props.filters){
 				filterData()
 			}else{
-				data.tableData = []
+				data.tableData = props.tableData
 			}
 		})
 	}else{
@@ -118,7 +123,7 @@ function init(){
 		if (props.filters){
 				filterData()
 			}else{
-				data.tableData = []
+				data.tableData = props.tableData
 			}
 	}
 }

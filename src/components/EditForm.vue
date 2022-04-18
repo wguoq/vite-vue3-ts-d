@@ -4,10 +4,11 @@
 //3.在2.的情况下props.defData!=null时就把里面的数据赋值给data.formData
 //4.props.pk!=null时，用pk去查询数据赋值给data.formData，并忽略props.defData
 //5.默认提供save方法
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
+import type  { FormInstance }  from 'element-plus';
 
 class Field{
 	name:string = ""
@@ -16,6 +17,7 @@ class Field{
 	primary_key:boolean = false 
 	max_length: number = 0
 	default: any = ""
+	required:boolean = false
 	help_text:string = ""
 }
 
@@ -59,8 +61,11 @@ const data = reactive<Data>({
 	formData:{},
 
 })
+const formRef = ref<FormInstance>()
 
 const doSvae=()=>{
+	//判断必填项有没有填
+
 	//把JSON格式化的数据转回string
 	try {
 		parseJson()
@@ -84,6 +89,12 @@ const doSvae=()=>{
 }
 
 const setDefData=()=>{
+	console.log('setDefData111111111111');
+	console.log(props.defData);
+	console.log(data.formData);
+	
+	
+	
 	if(props.defData){
 		let keys = Object.keys(data.formData)
 		for (let k of keys){
@@ -132,8 +143,8 @@ function init(){
 	config2.params.filters = {"pk":props.pk}
 
 	// 如果没有传入pk，那就是add，会处理默认值
-	if(!props.pk){
-		if(!props.fieldInfo){
+	if(props.pk == null){
+		if(props.fieldInfo == null){
 			axiosSend(config1).then((res:any)=>{
 				data.fieldInfo = res.data.fields
 				if (data.fieldInfo){
@@ -142,16 +153,23 @@ function init(){
 					}
 				}
 				setDefData()
+				stringifyJson()
 			})
 		}else{
 			data.fieldInfo = props.fieldInfo
+			if (data.fieldInfo){
+				for (let f of data.fieldInfo){
+					data.formData[f.name] = f.default
+				}
+			}
 			setDefData()
+			stringifyJson()
 		}
 		
 	// 如果传入了pk，那就是edit，不要默认值
 	}else{
-		if(!props.fieldInfo){
-			axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{
+		if(props.fieldInfo == null){
+			axios.all([axiosSend(config1),axiosSend(config2)]).then(axios.spread((res1,res2)=>{			
 				data.fieldInfo = res1.data.fields
 				data.formData = res2.data.data
 				//处理一下json数据
@@ -186,7 +204,9 @@ const isInList =(data: any,list: any[])=>{
 	}
 	return false
 }
+const isRequired=()=>{
 
+}
 const getInputType=(t: string)=>{
 	if (t == "IntegerField"){
 		return "number"
@@ -205,20 +225,23 @@ watch(props,()=>init())
 
 <template>
 		<el-form 
+		ref = "formRef"
 		label-position="top"
 		label-width="80px" 
 		 >
 			<el-row>
 			<template v-for=" field of data.fieldInfo " >
 				<el-col :span="11" style="margin-left: 5px;" v-show="!isInList(field.name,props.hideLabel)">
-					<el-form-item :label="field.verbose_name + ' : '+field.name" >
-						<!-- <pre>{{data.formData[field.name]}}</pre> -->
+					<el-form-item 
+					:label="field.verbose_name + ' : '+field.name" 
+					:required = "field.required"
+					>
 						<el-input
 						v-model = data.formData[field.name]
 						:type = "getInputType(field.type)"
 						:row = 3
 						:placeholder="field.help_text"	
-						:disabled="isInList(field.name,props.disabledLabel) || props.readOnly"					
+						:disabled="isInList(field.name,props.disabledLabel) || props.readOnly"				
 						autosize
 						>
 						</el-input>
@@ -227,7 +250,7 @@ watch(props,()=>init())
 			</template>
 			</el-row>
 			<el-row justify="center" v-if="!props.noSave">
-				<el-button type="primary" @click="doSvae">Save</el-button>
+				<el-button type="primary" @click="doSvae(formRef)">Save</el-button>
 			</el-row>
 			<slot name="formSlot"></slot>
 		</el-form>

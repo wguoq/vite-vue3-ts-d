@@ -46,9 +46,9 @@
 				<span>Home</span>
 			</el-menu-item>
 			
-			<el-menu-item index="/tester" >
+			<el-menu-item index="/testcase" >
 				<el-icon><Bell /></el-icon>
-				<span>Tester</span>
+				<span>TestCase</span>
 			</el-menu-item>
 
 			<el-sub-menu index="">

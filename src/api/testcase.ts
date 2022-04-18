@@ -1,5 +1,5 @@
 class Query{
-	url="/tester/query/"
+	url="/testcase/query/"
 	method="get"
 	baseURL="/api"
 	timeout=5000
@@ -13,7 +13,7 @@ class Query{
 }
 
 class Commit{
-	url="/tester/commit/"
+	url="/testcase/commit/"
 	method="post"
 	baseURL="/api"
 	timeout=5000
@@ -21,7 +21,7 @@ class Commit{
 		repo:"",
 		action:"",
 		data :{},
-		condition:{},
+		condition:[],
 	}
 }
 

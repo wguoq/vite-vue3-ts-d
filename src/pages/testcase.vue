@@ -4,7 +4,7 @@ import EditForm from 'components/EditForm.vue';
 import { ref,reactive,} from 'vue';
 import { ElMessage, ElTable } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
-import TesterApi from 'api/tester.ts'
+import TestCaseApi from 'api/testcase.ts'
 
 class TableProps{
 	api:any = null
@@ -74,25 +74,25 @@ const TcCheckTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 function init(){
 
 	data.tcApiTableP = new TableProps()
-	data.tcApiTableP.api = TesterApi
+	data.tcApiTableP.api = TestCaseApi
 	data.tcApiTableP.repo = "TcApi"
 	data.tcApiTableP.filters = {}
 	data.tcApiTableP.colwidth = 150
 
 	data.testCaseTableP = new TableProps()
-	data.testCaseTableP.api = TesterApi
+	data.testCaseTableP.api = TestCaseApi
 	data.testCaseTableP.repo = "TestCase"
 	data.testCaseTableP.filters = null
 	data.testCaseTableP.colwidth = 150
 
 	data.tcApiDataTableP = new TableProps()
-	data.tcApiDataTableP.api = TesterApi
+	data.tcApiDataTableP.api = TestCaseApi
 	data.tcApiDataTableP.repo = "TcApiData"
 	data.tcApiDataTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
 
 	data.tcCheckTableP = new TableProps()
-	data.tcCheckTableP.api = TesterApi
+	data.tcCheckTableP.api = TestCaseApi
 	data.tcCheckTableP.repo = "TcCheckPoint"
 	data.tcCheckTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
@@ -102,7 +102,7 @@ function init(){
 const addTcApi=()=>{
 	data.editForm = new FormProps()
 	data.editForm.action = "save"
-	data.editForm.api = TesterApi
+	data.editForm.api = TestCaseApi
 	data.editForm.repo = "TcApi"
 	data.editForm.hideLabel = ["id","created_time","modified_time"]
 	data.editForm.disabledLabel = ["version"]
@@ -113,7 +113,7 @@ const addTestCase=()=>{
 	if (TcApiTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.action = "save"
-		data.editForm.api = TesterApi
+		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TestCase"
 		data.editForm.defData = {"tc_action_id": TcApiTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
@@ -125,7 +125,7 @@ const addTestCase=()=>{
 }
 
 const runTestCase=(row:any)=>{
-	let config = new TesterApi.Commit()
+	let config = new TestCaseApi.Commit()
 	config.data.action = "run"
 	config.data.data = {"pk":row.id}
 	let load = loading()
@@ -142,7 +142,7 @@ const addTcApiData=()=>{
 	if (TestCaseTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.action = "save"
-		data.editForm.api = TesterApi
+		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TcApiData"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
@@ -161,7 +161,7 @@ const addTcCheck=()=>{
 	if (TcApiDataTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.action = "save"
-		data.editForm.api = TesterApi
+		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TcCheckPoint"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null

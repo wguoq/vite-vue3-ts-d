@@ -2,17 +2,18 @@
 import SingleTable from 'components/SingleTable.vue';
 import EditForm from 'components/EditForm.vue';
 import { ref,reactive,} from 'vue';
-import { ElMessage, ElTable } from 'element-plus';
+import { barProps, ElMessage, ElTable } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts';
 import FlowApi from 'api/flow.ts';
 import axios from 'axios';
 
 class TableProps{
 	api:any = null
-	repo: string = ""
+	repo: string | null = ""
 	filters: {[key: string]: any;}|null = null
 	pageSize:number = 5
 	fieldInfo: any = null
+	tableData: any = []
 	colwidth: any = "auto"
 }
 
@@ -34,6 +35,7 @@ const data = reactive({
 	nodeTableP: new TableProps(),
 	orderTableP: new TableProps(),
 	addTableP: new TableProps(),
+	groupTableP:new TableProps(),
 	editForm: new FormProps(),
 	showDialog:false,
 	showListDialog:false,
@@ -57,7 +59,53 @@ const FlowTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 const NodeTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 }
 
-const OrderTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{	
+const OrderTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
+	console.log(OrderTable.value.current.row);
+	
+	getGroupTableInfo().then(axios.spread(function (res1,res2,res3) {
+		let a = res1.data.fields
+		let b = res2.data.fields
+		let c = res3.data.fields
+		if (OrderTable.value?.current.row){
+			let config1 = new FlowApi.Query()
+			config1.params.repo = 'FlowDesign'
+			config1.params.action = "table_get"
+			config1.params.filters = {"pk":OrderTable.value?.current.row.flow_design}
+
+			let config2 = new FlowApi.Query()
+			config2.params.repo = 'NodeDesign'
+			config2.params.action = "table_get"
+			config2.params.filters = {"pk":OrderTable.value?.current.row.node_design}
+
+			let config3 = new FlowApi.Query()
+			config3.params.repo = 'FlowNodeOder'
+			config3.params.action = "table_get"
+			config3.params.filters = {"pk":OrderTable.value?.current.row.id}
+
+			axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)]).then(axios.spread(function (res1,res2,res3){
+				let d = res1.data.data
+				let e = res2.data.data
+				let f = res3.data.data
+				data.groupTableP = new TableProps()
+				data.groupTableP.api = FlowApi
+				data.groupTableP.filters = null
+				data.groupTableP.colwidth = 150
+				data.groupTableP.fieldInfo = [...a,...b,...c]
+				data.groupTableP.tableData = [{...d,...e,...f}]
+
+			}))
+		}else{
+				data.groupTableP = new TableProps()
+				data.groupTableP.api = FlowApi
+				data.groupTableP.filters = null
+				data.groupTableP.colwidth = 150
+				data.groupTableP.fieldInfo = [...a,...b,...c]
+				data.groupTableP.tableData = []
+		}
+
+	}))
+
+
 }
 
 function init(){
@@ -78,6 +126,12 @@ function init(){
 	data.orderTableP.api = FlowApi
 	data.orderTableP.repo = "FlowNodeOder"
 	data.orderTableP.filters = null
+
+	data.groupTableP = new TableProps()
+	data.groupTableP.api = null
+	data.groupTableP.repo = null
+	data.groupTableP.filters = null
+	data.groupTableP.colwidth = 150
 
 }
 
@@ -136,30 +190,58 @@ const addOrder=()=>{
 	}
 }
 
-const addOrderG=()=>{	
+const getGroupTableInfo=()=>{
 	let config1 = new FlowApi.Query()
 	config1.params.repo = 'FlowNodeOder'
-	config1.params.action = "getFieldInfoT"
+	config1.params.action = "getTableInfo"
 
 	let config2 = new FlowApi.Query()
 	config2.params.repo = 'FlowDesign'
-	config2.params.action = "getFieldInfoT"
+	config2.params.action = "getTableInfo"
 
 	let config3 = new FlowApi.Query()
 	config3.params.repo = 'NodeDesign'
-	config3.params.action = "getFieldInfoT"
-	axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)]).then(axios.spread(function (res1,res2,res3) {
+	config3.params.action = "getTableInfo"
+	return axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)])
+}
+
+const addOrderG=()=>{
+	getGroupTableInfo().then(axios.spread(function (res1,res2,res3) {
 		let a = res1.data.fields
 		let b = res2.data.fields
 		let c = res3.data.fields
-		console.log([...a,...b,...c]);
-		data.condition = ["Flow_Node_Oder@flow_design=Flow_Design@id","Flow_Node_Oder@node_design=Node_Design@id"]
+		data.condition = ["FlowNodeOder__flow_design=FlowDesign__id","FlowNodeOder__node_design=NodeDesign__id"]
 		data.editForm = new FormProps()
-		data.editForm.action = "gsave"
+		data.editForm.action = "save_group"
 		data.editForm.api = FlowApi
-		data.editForm.repo = ''
+		data.editForm.repo = 'FlowNodeOder'
 		data.editForm.pk = null
 		data.editForm.fieldInfo = [...a,...b,...c]
+		if(FlowTable.value?.current.row){
+			let config = new FlowApi.Query()
+			config.params.repo = 'FlowDesign'
+			config.params.action = "table_get"
+			config.params.filters = {"pk":FlowTable.value?.current.row.id}
+			axiosSend(config).then((res:any)=>{
+				let a = res.data.data
+				let x = {"FlowNodeOder__flow_design":a.FlowDesign__id}
+				if(NodeTable.value?.current.row){
+					let config = new FlowApi.Query()
+					config.params.repo = 'NodeDesign'
+					config.params.action = "table_get"
+					config.params.filters = {"pk":NodeTable.value?.current.row.id}
+					axiosSend(config).then((res:any)=>{
+						let b = res.data.data
+						let y = {"FlowNodeOder__node_design":b.NodeDesign__id}
+						data.editForm.defData = {...x,...y,...a,...b}
+					})
+				}else{
+					data.editForm.defData = {...x,...a}	
+				}
+			})
+
+		}
+		data.editForm.disabledLabel = ["FlowNodeOder__id","FlowDesign__id","NodeDesign__id"]
 		data.showDialog = true
 
 	}))
@@ -197,6 +279,7 @@ const doImport=(row:any,repo:string)=>{
 		if(res){
 			ElMessage.success(JSON.stringify(res.data))
 			data.showListDialog = false
+			reload()
 		}
 		
 	})
@@ -232,27 +315,37 @@ const AddTableAdd=()=>{
 	data.showDialog = true
 }
 
-function reload(name:string){
-	if(name == 'FlowDesign'){
-		data.flowTableP.filters = {}
+function reload(){
+	let name = data.editForm.repo
+	switch (name){
+		case 'FlowDesign': 
+			data.flowTableP.filters = {}
+			break
+		case 'NodeDesign':
+			data.nodeTableP.filters = {}
+			break
+		case 'FlowNodeOder':
+			data.orderTableP.filters = {"flow_design": FlowTable.value?.current.row.id}
+			break
+		case 'NodeStatusRule':
+			data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
+			break
+		case 'NodeStartRule':
+			data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
+			break
+		case 'FlowResultRule':
+			data.addTableP.filters = {}
+			break
+		case 'FlowStatusRule':
+			data.addTableP.filters = {}
+			break
 	}
-	else if(name == 'NodeDesign'){
-		data.nodeTableP.filters = {}
-	}
-	else if(name == 'FlowNodeOder'){
-		data.orderTableP.filters = {"flow_design": FlowTable.value.current.row.id}
-	}
-	else if(name == 'NodeStatusRule'){
-		data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
-	}
-	else if(name == 'NodeStartRule'){
-		data.addTableP.filters = {"node_design": NodeTable.value.current.row.id}
-	}
+
 }
 
-const afterSave=(name:string)=>{
+const afterSave=()=>{
 	data.showDialog = false
-	reload(name)
+	reload()
 }
 
 init()
@@ -280,7 +373,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:readOnly = data.editForm.readOnly
 		:noSave = data.editForm.noSave
 		:condition=data.condition
-		@afterSave = "afterSave(data.editForm.repo)"
+		@afterSave = "afterSave"
 		></EditForm>
 	</el-dialog>
 
@@ -417,7 +510,6 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 
 	<el-row style="text-align: left; margin: 5px;">
 		<el-button type="primary" plain @click="addOrder">新增</el-button>
-		<el-button type="primary" plain @click="addOrderG">组合新增</el-button>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -431,6 +523,31 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:noEditFields = noEditFields
 		:colwidth=data.orderTableP.colwidth
 		@currentChange="OrderTableCurrentChange"
+		>
+		</SingleTable>
+	</el-row>
+
+	<el-row justify="center" style="margin: 5px;">
+		<span>	<el-row justify="center" style="margin: 5px;">
+		<span>三表组合</span>
+	</el-row></span>
+	</el-row>
+	<el-row style="text-align: left; margin: 5px;">
+		<el-button type="primary" plain @click="addOrderG">组合新增</el-button>
+	</el-row>
+
+	<el-row style="text-align: left; margin: 5px;">
+		<SingleTable
+		ref="GroupTable"
+		:api=data.groupTableP.api
+		:repo=data.groupTableP.repo
+		:filters = data.groupTableP.filters
+		:pageSize=data.groupTableP.pageSize
+		:fieldInfo=data.groupTableP.fieldInfo
+		:tableData=data.groupTableP.tableData
+		:noEditFields = noEditFields
+		:colwidth=data.groupTableP.colwidth
+		@currentChange=""
 		>
 		</SingleTable>
 	</el-row>

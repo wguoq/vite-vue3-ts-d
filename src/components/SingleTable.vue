@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-// 只有query模式
-// filters为null时不会发起查询数据，这是为了作为上下列表的下表时一开始不会查询
-// fieldInfo为null时才会发起查询fieldInfo，这是为了组合多表字段时从父组件获取
-// 通过rowClick事件把row传出去就行了
+//包含query和del，需要传入所需的参数
+//根据传入的filters判断要不要查询
 import { reactive, watch } from 'vue'
 import { axiosSend, loading } from 'utils/http.ts'
 import EditForm from 'components/EditForm.vue';
+import { ElMessage } from 'element-plus';
 
 class Field{
 	name:string = ""
@@ -21,6 +20,7 @@ interface Props{
 	api?:any,
 	repo?: any,
 	filters?: {[key: string]: any;}|null,
+	replaced?:0|1
 	pageSize:number,
 	fieldInfo?: Field[]|null,
 	tableData?:[],
@@ -32,6 +32,7 @@ const props = withDefaults(defineProps<Props>(),{
 	api:null,
 	repo:null,
 	filters: null,
+	replaced:0,
 	pageSize:5,
 	fieldInfo:null,
 	tableData:()=>[],
@@ -76,11 +77,10 @@ const emits = defineEmits<{
 
 const filterData=()=>{
 	let config = new props.api.Query()
-	config.params.repo = props.repo
-	config.params.action = "filter"
-	config.params.filters = props.filters
-	config.params.pageSize = data.pageSize
-	config.params.pageNumber = current.page
+	config.data.repo = props.repo
+	config.data.filters = props.filters
+	config.data.pageSize = data.pageSize
+	config.data.pageNumber = current.page
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
 		load.close()
@@ -94,13 +94,15 @@ const filterData=()=>{
 function init(){
 	current.row = null
 	if (props.api == null || props.repo == null){
+		data.fieldInfo = props.fieldInfo
+		data.tableData = props.tableData
 		return true	
 	}
 	//处理FieldInfo,null就去查询
 	if(props.fieldInfo == null){
-		let config = new props.api.Query()
+		let config = new props.api.FieldInfo()
 		config.params.repo = props.repo
-		config.params.action = "getFieldInfo"
+		config.params.replaced = props.replaced
 		let load = loading()
 		axiosSend(config).then((res:any)=>{
 			load.close()
@@ -156,7 +158,7 @@ function delTip(row:any){
 	
 }
 function delCurrentRow(){
-	let config = new props.api.Commit()
+	let config = new props.api.Save()
 	config.data.repo = props.repo
 	config.data.action = 'del'
 	config.data.data = {'pk': current.row[data.pkName]}
@@ -165,6 +167,7 @@ function delCurrentRow(){
 		load.close()
 		data.delTip = false
 		filterData()
+		ElMessage.success("ok")
 	})
 }
 

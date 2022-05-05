@@ -9,25 +9,29 @@ import axios from 'axios';
 
 class TableProps{
 	api:any = null
-	repo: string | null = ""
+	repo: string | null = null
 	filters: {[key: string]: any;}|null = null
+	replaced = 0
 	pageSize:number = 5
 	fieldInfo: any = null
 	tableData: any = []
+	noEditFields: any = []
 	colwidth: any = "auto"
 }
 
 class FormProps{
-	api:any = ""
-	repo: string = ""
-	action: string = "save"
-	pk: any = null
-	fieldInfo: any[]|null = null
-	defData: {[key: string]: any;}|null = null
-	disabledLabel: string[] = []
-	hideLabel: string[] = []
-	readOnly: boolean = false
-	noSave: boolean = false
+	api:any=null
+	repo:any=null
+	pk:any=null
+	replaced:any=0
+	isgroup:any=0
+	condition:any=null
+	fieldInfo:any=null
+	defData:any=null
+	disabledLabel:any=[]
+	hideLabel:any=[]
+	readOnly:boolean=false
+	noSave:boolean=false
 }
 
 const data = reactive({
@@ -60,35 +64,35 @@ const NodeTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 }
 
 const OrderTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
-	console.log(OrderTable.value.current.row);
-	
+
 	getGroupTableInfo().then(axios.spread(function (res1,res2,res3) {
 		let a = res1.data.fields
 		let b = res2.data.fields
 		let c = res3.data.fields
 		if (OrderTable.value?.current.row){
 			let config1 = new FlowApi.Query()
-			config1.params.repo = 'FlowDesign'
-			config1.params.action = "table_get"
-			config1.params.filters = {"pk":OrderTable.value?.current.row.flow_design}
+			config1.data.repo = 'FlowDesign'
+			config1.data.filters = {"pk":OrderTable.value?.current.row.flow_design}
+			config1.data.replaced = 1
 
 			let config2 = new FlowApi.Query()
-			config2.params.repo = 'NodeDesign'
-			config2.params.action = "table_get"
-			config2.params.filters = {"pk":OrderTable.value?.current.row.node_design}
+			config2.data.repo = 'NodeDesign'
+			config2.data.filters = {"pk":OrderTable.value?.current.row.node_design}
+			config2.data.replaced = 1
 
 			let config3 = new FlowApi.Query()
-			config3.params.repo = 'FlowNodeOder'
-			config3.params.action = "table_get"
-			config3.params.filters = {"pk":OrderTable.value?.current.row.id}
+			config3.data.repo = 'FlowNodeOder'
+			config3.data.filters = {"pk":OrderTable.value?.current.row.id}
+			config3.data.replaced = 1
 
 			axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)]).then(axios.spread(function (res1,res2,res3){
-				let d = res1.data.data
-				let e = res2.data.data
-				let f = res3.data.data
+				let d = res1.data.rows[0]
+				let e = res2.data.rows[0]
+				let f = res3.data.rows[0]
 				data.groupTableP = new TableProps()
 				data.groupTableP.api = FlowApi
 				data.groupTableP.filters = null
+				data.groupTableP.replaced = 1
 				data.groupTableP.colwidth = 150
 				data.groupTableP.fieldInfo = [...a,...b,...c]
 				data.groupTableP.tableData = [{...d,...e,...f}]
@@ -98,6 +102,7 @@ const OrderTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 				data.groupTableP = new TableProps()
 				data.groupTableP.api = FlowApi
 				data.groupTableP.filters = null
+				data.groupTableP.replaced = 1
 				data.groupTableP.colwidth = 150
 				data.groupTableP.fieldInfo = [...a,...b,...c]
 				data.groupTableP.tableData = []
@@ -131,13 +136,13 @@ function init(){
 	data.groupTableP.api = null
 	data.groupTableP.repo = null
 	data.groupTableP.filters = null
+	data.groupTableP.replaced = 1
 	data.groupTableP.colwidth = 150
 
 }
 
 const addFlow=()=>{
 	data.editForm = new FormProps()
-	data.editForm.action = "save"
 	data.editForm.api = FlowApi
 	data.editForm.repo = "FlowDesign"
 	data.editForm.hideLabel = ["id","created_time","modified_time","code","ver_status"]
@@ -147,7 +152,7 @@ const addFlow=()=>{
 
 const instFlow=(row:any)=>{
 	let config = new FlowApi.Commit()
-	config.data.action = "instance"
+	config.data.action = "inst"
 	config.data.data = {"pk":row.id}
 	let load = loading()
 	axiosSend(config).then((res:any)=>{
@@ -161,7 +166,6 @@ const instFlow=(row:any)=>{
 
 const addNode=()=>{
 	data.editForm = new FormProps()
-	data.editForm.action = "save"
 	data.editForm.api = FlowApi
 	data.editForm.repo = "NodeDesign"
 	data.editForm.hideLabel = ["id","created_time","modified_time","code","ver_status"]
@@ -172,7 +176,6 @@ const addNode=()=>{
 const addOrder=()=>{	
 	if (FlowTable.value?.current.row){
 		data.editForm = new FormProps()
-		data.editForm.action = "save"
 		data.editForm.api = FlowApi
 		data.editForm.repo = "FlowNodeOder"
 		data.editForm.pk = null
@@ -191,17 +194,17 @@ const addOrder=()=>{
 }
 
 const getGroupTableInfo=()=>{
-	let config1 = new FlowApi.Query()
+	let config1 = new FlowApi.FieldInfo()
 	config1.params.repo = 'FlowNodeOder'
-	config1.params.action = "getTableInfo"
+	config1.params.replaced = 1
 
-	let config2 = new FlowApi.Query()
+	let config2 = new FlowApi.FieldInfo()
 	config2.params.repo = 'FlowDesign'
-	config2.params.action = "getTableInfo"
+	config2.params.replaced = 1
 
-	let config3 = new FlowApi.Query()
+	let config3 = new FlowApi.FieldInfo()
 	config3.params.repo = 'NodeDesign'
-	config3.params.action = "getTableInfo"
+	config3.params.replaced = 1
 	return axios.all([axiosSend(config1),axiosSend(config2),axiosSend(config3)])
 }
 
@@ -212,26 +215,26 @@ const addOrderG=()=>{
 		let c = res3.data.fields
 		data.condition = ["FlowNodeOder__flow_design=FlowDesign__id","FlowNodeOder__node_design=NodeDesign__id"]
 		data.editForm = new FormProps()
-		data.editForm.action = "save_group"
+		data.editForm.isgroup = 1
 		data.editForm.api = FlowApi
 		data.editForm.repo = 'FlowNodeOder'
 		data.editForm.pk = null
 		data.editForm.fieldInfo = [...a,...b,...c]
 		if(FlowTable.value?.current.row){
 			let config = new FlowApi.Query()
-			config.params.repo = 'FlowDesign'
-			config.params.action = "table_get"
-			config.params.filters = {"pk":FlowTable.value?.current.row.id}
+			config.data.repo = 'FlowDesign'
+			config.data.filters = {"pk":FlowTable.value?.current.row.id}
+			config.data.replaced = 1 
 			axiosSend(config).then((res:any)=>{
-				let a = res.data.data
+				let a = res.data.rows[0]
 				let x = {"FlowNodeOder__flow_design":a.FlowDesign__id}
 				if(NodeTable.value?.current.row){
 					let config = new FlowApi.Query()
-					config.params.repo = 'NodeDesign'
-					config.params.action = "table_get"
-					config.params.filters = {"pk":NodeTable.value?.current.row.id}
+					config.data.repo = 'NodeDesign'
+					config.data.filters = {"pk":NodeTable.value?.current.row.id}
+					config.data.replaced = 1 
 					axiosSend(config).then((res:any)=>{
-						let b = res.data.data
+						let b = res.data.rows[0]
 						let y = {"FlowNodeOder__node_design":b.NodeDesign__id}
 						data.editForm.defData = {...x,...y,...a,...b}
 					})
@@ -307,7 +310,6 @@ const nStartRule=(row:any)=>{
 }
 
 const AddTableAdd=()=>{
-	data.editForm.action = "save"
 	data.editForm.api = FlowApi
 	data.editForm.repo = data.addTableP.repo
 	data.editForm.hideLabel = ["id","created_time","modified_time","code","ver_status"]
@@ -362,17 +364,18 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	>
 		<EditForm
 		ref="DialogForm" 
-		:action = data.editForm.action
 		:api = data.editForm.api
 		:repo = data.editForm.repo
 		:pk = data.editForm.pk
+		:replaced = data.editForm.replaced
+		:isgroup = data.editForm.isgroup
+		:condition = data.editForm.condition
 		:fieldInfo = data.editForm.fieldInfo
 		:defData = data.editForm.defData
 		:disabledLabel= data.editForm.disabledLabel
 		:hideLabel= data.editForm.hideLabel
 		:readOnly = data.editForm.readOnly
 		:noSave = data.editForm.noSave
-		:condition=data.condition
 		@afterSave = "afterSave"
 		></EditForm>
 	</el-dialog>
@@ -395,6 +398,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:api=data.addTableP.api
 		:repo=data.addTableP.repo
 		:filters = data.addTableP.filters
+		:replaced = data.addTableP.replaced
 		:pageSize=data.addTableP.pageSize
 		:fieldInfo=data.addTableP.fieldInfo
 		:colwidth=data.addTableP.colwidth
@@ -542,6 +546,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 		:api=data.groupTableP.api
 		:repo=data.groupTableP.repo
 		:filters = data.groupTableP.filters
+		:replaced = data.groupTableP.replaced
 		:pageSize=data.groupTableP.pageSize
 		:fieldInfo=data.groupTableP.fieldInfo
 		:tableData=data.groupTableP.tableData

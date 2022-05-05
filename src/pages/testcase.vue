@@ -6,6 +6,7 @@ import { ElMessage, ElTable } from 'element-plus';
 import { axiosSend, loading } from 'utils/http.ts'
 import TestCaseApi from 'api/testcase.ts'
 
+
 class TableProps{
 	api:any = null
 	repo: string = ""
@@ -16,16 +17,18 @@ class TableProps{
 }
 
 class FormProps{
-	api:any = ""
-	repo: string = ""
-	action: string = "save"
-	pk: any = null
-	fieldInfo: any[]|null = null
-	defData: {[key: string]: any;}|null = null
-	disabledLabel: string[] = []
-	hideLabel: string[] = []
-	readOnly: boolean = false
-	noSave: boolean = false
+	api:any=null
+	repo:any=null
+	pk:any=null
+	replaced:any=0
+	isgroup:any=0
+	condition:any=null
+	fieldInfo:any=null
+	defData:any=null
+	disabledLabel:any=[]
+	hideLabel:any=[]
+	readOnly:boolean=false
+	noSave:boolean=false
 }
 
 const data = reactive({
@@ -101,7 +104,6 @@ function init(){
 
 const addTcApi=()=>{
 	data.editForm = new FormProps()
-	data.editForm.action = "save"
 	data.editForm.api = TestCaseApi
 	data.editForm.repo = "TcApi"
 	data.editForm.hideLabel = ["id","created_time","modified_time"]
@@ -112,7 +114,6 @@ const addTcApi=()=>{
 const addTestCase=()=>{
 	if (TcApiTable.value?.current.row){
 		data.editForm = new FormProps()
-		data.editForm.action = "save"
 		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TestCase"
 		data.editForm.defData = {"tc_action_id": TcApiTable.value.current.row.id}
@@ -141,7 +142,6 @@ const runTestCase=(row:any)=>{
 const addTcApiData=()=>{	
 	if (TestCaseTable.value?.current.row){
 		data.editForm = new FormProps()
-		data.editForm.action = "save"
 		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TcApiData"
 		data.editForm.pk = null
@@ -160,7 +160,6 @@ const addTcApiData=()=>{
 const addTcCheck=()=>{
 	if (TcApiDataTable.value?.current.row){
 		data.editForm = new FormProps()
-		data.editForm.action = "save"
 		data.editForm.api = TestCaseApi
 		data.editForm.repo = "TcCheckPoint"
 		data.editForm.pk = null
@@ -212,10 +211,12 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	>
 		<EditForm
 		ref="DialogForm" 
-		:action = data.editForm.action
 		:api = data.editForm.api
 		:repo = data.editForm.repo
 		:pk = data.editForm.pk
+		:replaced = data.editForm.replaced
+		:isgroup = data.editForm.isgroup
+		:condition = data.editForm.condition
 		:fieldInfo = data.editForm.fieldInfo
 		:defData = data.editForm.defData
 		:disabledLabel= data.editForm.disabledLabel

@@ -47,7 +47,7 @@ const TcCheckTable = ref()
 
 const TcApiTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 	if (TcApiTable.value?.current.row){
-		data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value.current.row.id}
+		data.testCaseTableP.filters = {"FK_TestApi_pk": TcApiTable.value.current.row.id}
 	}else{
 		data.testCaseTableP.filters = null
 	}
@@ -55,7 +55,7 @@ const TcApiTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 
 const TestCaseTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 	if (TestCaseTable.value?.current.row){
-		data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value.current.row.id}
+		data.tcApiDataTableP.filters = {"FK_ApiTestCase_pk": TestCaseTable.value.current.row.id}
 	}else{
 		data.tcApiDataTableP.filters = null
 	}
@@ -64,7 +64,7 @@ const TestCaseTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 const TcApiDataTableCurrentChange=(currentRow:any,oldCurrentRow:any)=>{
 
 	if (TcApiDataTable.value?.current.row){
-		data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value.current.row.id}
+		data.tcCheckTableP.filters = {"FK_ApiTestData_pk": TcApiDataTable.value.current.row.id}
 	}else{
 		data.tcCheckTableP.filters = null
 	}
@@ -78,25 +78,25 @@ function init(){
 
 	data.tcApiTableP = new TableProps()
 	data.tcApiTableP.api = TestCaseApi
-	data.tcApiTableP.repo = "TcApi"
+	data.tcApiTableP.repo = "TestApi"
 	data.tcApiTableP.filters = {}
 	data.tcApiTableP.colwidth = 150
 
 	data.testCaseTableP = new TableProps()
 	data.testCaseTableP.api = TestCaseApi
-	data.testCaseTableP.repo = "TestCase"
+	data.testCaseTableP.repo = "ApiTestCase"
 	data.testCaseTableP.filters = null
 	data.testCaseTableP.colwidth = 150
 
 	data.tcApiDataTableP = new TableProps()
 	data.tcApiDataTableP.api = TestCaseApi
-	data.tcApiDataTableP.repo = "TcApiData"
+	data.tcApiDataTableP.repo = "ApiTestData"
 	data.tcApiDataTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
 
 	data.tcCheckTableP = new TableProps()
 	data.tcCheckTableP.api = TestCaseApi
-	data.tcCheckTableP.repo = "TcCheckPoint"
+	data.tcCheckTableP.repo = "ApiTestCheckPoint"
 	data.tcCheckTableP.filters = null
 	data.tcApiDataTableP.colwidth = 150
 
@@ -105,7 +105,7 @@ function init(){
 const addTcApi=()=>{
 	data.editForm = new FormProps()
 	data.editForm.api = TestCaseApi
-	data.editForm.repo = "TcApi"
+	data.editForm.repo = "TestApi"
 	data.editForm.hideLabel = ["id","created_time","modified_time"]
 	data.editForm.disabledLabel = ["version"]
 	data.showDialog = true
@@ -115,13 +115,13 @@ const addTestCase=()=>{
 	if (TcApiTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.api = TestCaseApi
-		data.editForm.repo = "TestCase"
-		data.editForm.defData = {"tc_action_id": TcApiTable.value.current.row.id}
+		data.editForm.repo = "ApiTestCase"
+		data.editForm.defData = {"FK_TestApi_pk": TcApiTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-		data.editForm.disabledLabel = ["version","tc_action_id"]
+		data.editForm.disabledLabel = ["version","FK_TestApi_pk"]
 		data.showDialog = true
 	}else{
-		ElMessage.warning("没有选中数据")
+		ElMessage.warning("没有选中TestApi数据")
 	}
 }
 
@@ -143,16 +143,16 @@ const addTcApiData=()=>{
 	if (TestCaseTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.api = TestCaseApi
-		data.editForm.repo = "TcApiData"
+		data.editForm.repo = "ApiTestData"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
-		data.editForm.defData = {"test_case":TestCaseTable.value.current.row.id}
+		data.editForm.defData = {"FK_ApiTestCase_pk":TestCaseTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-		data.editForm.disabledLabel = ["version","test_case"]
+		data.editForm.disabledLabel = ["version","FK_ApiTestCase_pk"]
 		data.showDialog = true
 		
 	}else{
-		ElMessage.warning("没有选中数据")
+		ElMessage.warning("没有选中ApiTestCase数据")
 
 	}
 }
@@ -161,32 +161,32 @@ const addTcCheck=()=>{
 	if (TcApiDataTable.value?.current.row){
 		data.editForm = new FormProps()
 		data.editForm.api = TestCaseApi
-		data.editForm.repo = "TcCheckPoint"
+		data.editForm.repo = "ApiTestCheckPoint"
 		data.editForm.pk = null
 		data.editForm.fieldInfo = null
-		data.editForm.defData = {"tc_data_id":TcApiDataTable.value.current.row.id}
+		data.editForm.defData = {"FK_ApiTestData_pk":TcApiDataTable.value.current.row.id}
 		data.editForm.hideLabel = ["id","code","created_time","modified_time"]
-		data.editForm.disabledLabel = ["version","tc_data_id"]
+		data.editForm.disabledLabel = ["version","FK_ApiTestData_pk"]
 		data.showDialog = true
 		
 	}else{
-		ElMessage.warning("没有选中数据")
+		ElMessage.warning("没有选中ApiTestData数据")
 
 	}
 }
 
 function reload(name:string){
-	if(name == 'TcApi'){
+	if(name == 'TestApi'){
 		data.tcApiTableP.filters = {}
 	}
-	else if(name == 'TestCase'){
-		data.testCaseTableP.filters = {"tc_action_id": TcApiTable.value?.current.row.id}
+	else if(name == 'ApiTestCase'){
+		data.testCaseTableP.filters = {"FK_TestApi_pk": TcApiTable.value?.current.row.id}
 	}
-	else if(name == 'TcApiData'){
-		data.tcApiDataTableP.filters = {"test_case": TestCaseTable.value?.current.row.id}
+	else if(name == 'ApiTestData'){
+		data.tcApiDataTableP.filters = {"FK_ApiTestCase_pk": TestCaseTable.value?.current.row.id}
 	}
-	else if(name == 'TcCheckPoint'){
-		data.tcCheckTableP.filters = {"tc_data_id": TcApiDataTable.value?.current.row.id}
+	else if(name == 'ApiTestCheckPoint'){
+		data.tcCheckTableP.filters = {"FK_ApiTestData_pk": TcApiDataTable.value?.current.row.id}
 	}
 
 }
@@ -197,7 +197,7 @@ const afterSave=(name:string)=>{
 }
 
 init()
-let noEditFields = ["id","code","created_time","modified_time","version","ver_status","test_case","tc_data_id"]
+let noEditFields = ["id","code","created_time","modified_time","version","ver_status","test_case","relate_TcApiData_pk"]
 
 
 </script>
@@ -228,7 +228,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	</el-dialog>
 	
 	<el-row justify="center" style="margin: 5px;">
-		<span>ApiTable</span>
+		<span>TestApi</span>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -251,7 +251,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	</el-row>
 
 	<el-row justify="center" style="margin: 5px;">
-		<span>TestCaseTable</span>
+		<span>ApiTestCase</span>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -289,7 +289,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	</el-row>
 
 	<el-row justify="center" style="margin: 5px;">
-		<span>ApiDataTable</span>
+		<span>ApiTestData</span>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">
@@ -312,7 +312,7 @@ let noEditFields = ["id","code","created_time","modified_time","version","ver_st
 	</el-row>
 
 	<el-row justify="center" style="margin: 5px;">
-		<span>CheckPointTable</span>
+		<span>ApiTestCheckPoint</span>
 	</el-row>
 
 	<el-row style="text-align: left; margin: 5px;">

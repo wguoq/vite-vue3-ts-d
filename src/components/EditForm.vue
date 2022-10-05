@@ -226,11 +226,19 @@ const getInputType=(t: string)=>{
 	}else if (t == "DateTimeField"){
 		return "text"
 		// return "datetime"
-	}else if (t == "JSONField"){
+	}else if (t == "JSONField" || t == "TextField"){
 		return "textarea"
 	}
 }
 
+const getSpan=(field: Field)=>{
+	if (field.type == "JSONField" || field.type == "TextField" || field.max_length > 200){
+		return 24
+	}else{
+		return 12
+	}
+
+}
 init()
 watch(props,()=>init())
 
@@ -242,9 +250,9 @@ watch(props,()=>init())
 		label-position="top"
 		label-width="80px" 
 		 >
-			<el-row>
+			<el-row :gutter="10" justfiy="center">
 			<template v-for=" field of data.fieldInfo " >
-				<el-col :span="11" style="margin-left: 5px;" v-show="!isInList(field.name,props.hideLabel)">
+				<el-col :span="getSpan(field)" v-show="!isInList(field.name,props.hideLabel)" :xs="24">
 					<el-form-item 
 					:label="field.verbose_name + ' : '+field.name" 
 					:required = "field.required"
@@ -252,14 +260,13 @@ watch(props,()=>init())
 						<el-input
 						v-model = data.formData[field.name]
 						:type = "getInputType(field.type)"
-						:row = 3
 						:placeholder="field.help_text"	
 						:disabled="isInList(field.name,props.disabledLabel) || props.readOnly"				
-						autosize
+						:autosize = "{minRows: 2,}"
 						>
 						</el-input>
 					</el-form-item>
-				</el-col>	
+				</el-col> 
 			</template>
 			</el-row>
 			<el-row justify="center" v-if="!props.noSave">
